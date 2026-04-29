@@ -688,14 +688,25 @@ async function enviarDatos() {
 }
 
 async function appendRows(filas) {
-  const params = new URLSearchParams({
-    sheetId: SHEET_ID,
-    rows: JSON.stringify(filas),
+  // Envía una petición GET por cada participante
+  const timestamp = new Date().toLocaleDateString('es-ES');
+  const promises = filas.map(f => {
+    const params = new URLSearchParams({
+      nombre: f[6],
+      club:   f[1],
+      cat:    f[2],
+      mod:    f[3],
+      sexo:   f[4],
+      peso:   f[7],
+      turno:  f[5],
+      fecha:  timestamp,
+    });
+    return fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
+      method: 'GET',
+      mode: 'no-cors',
+    });
   });
-  await fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
-    method: 'GET',
-    mode: 'no-cors',
-  });
+  await Promise.all(promises);
 }
 
 function setEstado(tipo, msg) {
