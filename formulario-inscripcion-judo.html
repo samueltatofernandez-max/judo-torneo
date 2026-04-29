@@ -688,17 +688,16 @@ async function enviarDatos() {
 }
 
 async function appendRows(filas) {
-  const res = await fetch(APPS_SCRIPT_URL, {
+  // Apps Script requiere no-cors; asumimos éxito si no hay excepción de red.
+  await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
       sheetId: SHEET_ID,
       rows: filas,
     }),
   });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  if (data.status !== 'ok') throw new Error(data.message || 'Error desconocido');
 }
 
 function setEstado(tipo, msg) {
