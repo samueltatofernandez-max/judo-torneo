@@ -688,18 +688,17 @@ async function enviarDatos() {
 }
 
 async function appendRows(filas) {
-  // no-cors es necesario al abrir el HTML como archivo local.
-  // Con no-cors no podemos leer la respuesta, así que asumimos éxito si no hay excepción de red.
-  await fetch(APPS_SCRIPT_URL, {
+  const res = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    mode: 'no-cors',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sheetId: SHEET_ID,
       rows: filas,
     }),
   });
-  // Si llegamos aquí sin excepción, la petición llegó al servidor.
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  if (data.status !== 'ok') throw new Error(data.message || 'Error desconocido');
 }
 
 function setEstado(tipo, msg) {
@@ -736,7 +735,7 @@ function actualizarGruposEnviados() {
 
 // ─── APPS SCRIPT URL ─────────────────────────────────────────────────────────
 // IMPORTANTE: Sustituye este valor por la URL de tu Google Apps Script publicado
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAQtGitxMXU-jiVATUw5UVPoCNY12ATewY6R4eN6u5Y5y1pGilldsjlqt1HSBd3Xuy/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzKxM6tcaT1ZAD2F6Jas0JGDqD2JWdnMCstEw-KtbcWXP72ycdIPhky91wBaWy8G_o/exec';
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Focos iniciales
