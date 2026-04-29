@@ -688,15 +688,13 @@ async function enviarDatos() {
 }
 
 async function appendRows(filas) {
-  // Apps Script requiere no-cors; asumimos éxito si no hay excepción de red.
-  await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
+  const params = new URLSearchParams({
+    sheetId: SHEET_ID,
+    rows: JSON.stringify(filas),
+  });
+  await fetch(APPS_SCRIPT_URL + '?' + params.toString(), {
+    method: 'GET',
     mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({
-      sheetId: SHEET_ID,
-      rows: filas,
-    }),
   });
 }
 
@@ -734,7 +732,7 @@ function actualizarGruposEnviados() {
 
 // ─── APPS SCRIPT URL ─────────────────────────────────────────────────────────
 // IMPORTANTE: Sustituye este valor por la URL de tu Google Apps Script publicado
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzKxM6tcaT1ZAD2F6Jas0JGDqD2JWdnMCstEw-KtbcWXP72ycdIPhky91wBaWy8G_o/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxDefMft1WXdA_c4TXGUIxoX_HkgUbd0W1vtiAXEVxE1Z2ZBH_X5SOgCjUiXXdzfmmc/exec';
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // Focos iniciales
