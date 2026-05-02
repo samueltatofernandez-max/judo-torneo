@@ -176,6 +176,23 @@
     .steps .step { font-size: 10px; }
     header { padding: 14px 16px; }
   }
+
+  .error-inline { color: #e74c3c; font-size: 13px; font-weight: 600; margin-top: 10px; display: none; }
+  .error-inline.visible { display: block; }
+
+  .banner-restaurar {
+    background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.35);
+    border-radius: 6px; padding: 13px 18px; margin-bottom: 20px;
+    font-size: 13px; color: #ccc; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .banner-restaurar strong { color: #fff; }
+
+  .aviso-dup {
+    background: rgba(240,192,64,0.08); border-left: 3px solid var(--amarillo);
+    border-radius: 4px; padding: 10px 14px; font-size: 13px; color: #ccc;
+    margin-bottom: 14px; line-height: 1.5;
+  }
+  .aviso-dup strong { color: var(--amarillo); }
 </style>
 </head>
 <body>
@@ -189,6 +206,12 @@
 </header>
 
 <div class="container">
+
+  <div id="banner-restaurar" class="banner-restaurar" style="display:none;">
+    📋 Tienes un borrador guardado del club <strong id="banner-club"></strong>.
+    <button id="btn-restaurar-si" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Restaurar</button>
+    <button id="btn-restaurar-no" class="btn btn-secondary" style="font-size:12px;padding:6px 14px;">Descartar</button>
+  </div>
 
   <div class="steps">
     <div class="step active" id="step1-ind"><div class="step-num">1</div><br>Club</div>
@@ -246,6 +269,7 @@
         </select>
       </div>
     </div>
+    <div id="error-paso1" class="error-inline"></div>
     <div class="nav-btns">
       <button class="btn btn-primary" onclick="irPaso2()">Continuar →</button>
     </div>
@@ -296,6 +320,7 @@
 
     <button class="btn-add" onclick="addNino()">＋ Añadir participante manualmente</button>
 
+    <div id="error-paso2" class="error-inline"></div>
     <div class="nav-btns">
       <button class="btn btn-secondary" onclick="irPaso(1)">← Atrás</button>
       <button class="btn btn-primary" onclick="irPaso3()">Revisar →</button>
@@ -305,6 +330,9 @@
   <!-- PASO 3: CONFIRMAR -->
   <div class="panel" id="panel3">
     <div class="panel-title">Confirma la inscripción <span class="tag">PASO 3</span></div>
+    <div id="aviso-duplicados" class="aviso-dup" style="display:none;">
+      ⚠ <strong>Posibles duplicados:</strong> <span id="lista-duplicados"></span> — revisa si es correcto antes de enviar.
+    </div>
     <div id="resumen-contenido"></div>
     <div id="estado-envio" style="margin-top:16px; text-align:center; min-height:30px;"></div>
     <div class="nav-btns">
@@ -376,6 +404,25 @@ function checkPeso(fila) {
 let state = { club: '', ninos: [], totalEnviados: 0 };
 let ninoId = 0;
 
+function mostrarError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('visible');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('visible'), 5000);
+}
+
+function mostrarExito() {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-exito').classList.add('active');
+  document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+  document.getElementById('exito-resumen').textContent =
+    `${state.ninos.length} participante${state.ninos.length !== 1 ? 's' : ''} del ${state.club} inscritos correctamente.`;
+  limpiarBorrador();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function irPaso(n) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel' + n).classList.add('active');
@@ -389,27 +436,43 @@ function irPaso(n) {
 
 function irPaso2() {
   const club = document.getElementById('select-club').value;
-  if (!club) { alert('Por favor selecciona tu club.'); return; }
+  if (!club) { mostrarError('error-paso1', 'Por favor selecciona tu club.'); return; }
   state.club = club;
   document.getElementById('info-club-display').innerHTML =
     `Club: <strong style="color:#fff">${club}</strong> — Añade todos los participantes. Puedes mezclar categorías libremente.`;
   if (document.getElementById('lista-ninos').children.length === 0) {
     addNino(); addNino(); addNino();
   }
+  guardarBorrador();
   irPaso(2);
 }
 
 function irPaso3() {
   const ninos = recogerNinos();
-  if (ninos.length === 0) { alert('Añade al menos un participante.'); return; }
+  if (ninos.length === 0) { mostrarError('error-paso2', 'Añade al menos un participante.'); return; }
   for (const n of ninos) {
-    if (!n.nombre && !n.apellidos) { alert('Todos los participantes deben tener al menos nombre o apellidos.'); return; }
-    if (!n.categoria) { alert(`Selecciona la categoría de "${n.nombre || 'un participante'}".`); return; }
-    if (!n.modalidad) { alert(`Selecciona la modalidad de "${n.nombre}".`); return; }
-    if (!n.peso || n.peso <= 0 || n.peso > 150) { alert(`Peso inválido para "${n.nombre}".`); return; }
-    if (!n.sexo)      { alert(`Selecciona el sexo de "${n.nombre}".`); return; }
+    if (!n.nombre || !n.apellidos) { mostrarError('error-paso2', 'Todos los participantes deben tener nombre Y apellidos.'); return; }
+    if (!n.categoria) { mostrarError('error-paso2', `Selecciona la categoría de "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.modalidad) { mostrarError('error-paso2', `Selecciona la modalidad de "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.peso || n.peso <= 0 || n.peso > 150) { mostrarError('error-paso2', `Peso inválido para "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.sexo) { mostrarError('error-paso2', `Selecciona el sexo de "${n.nombre} ${n.apellidos}".`); return; }
   }
   state.ninos = ninos;
+
+  const seen = new Set();
+  const duplicados = [];
+  ninos.forEach(n => {
+    const key = (n.nombre + '_' + n.apellidos).toLowerCase();
+    if (seen.has(key)) duplicados.push(`${n.nombre} ${n.apellidos}`);
+    seen.add(key);
+  });
+  const avisoEl = document.getElementById('aviso-duplicados');
+  if (duplicados.length > 0) {
+    document.getElementById('lista-duplicados').textContent = duplicados.join(', ');
+    avisoEl.style.display = '';
+  } else {
+    avisoEl.style.display = 'none';
+  }
 
   const html = `
     <div class="resumen-card">
@@ -522,6 +585,7 @@ function pegarMasivo() {
   document.getElementById('paste-nombres').value = '';
   document.getElementById('paste-apellidos').value = '';
   estado.innerHTML = `<span style="color:#4caf50">✅ ${total} participantes añadidos</span>`;
+  guardarBorrador();
 }
 
 function recogerNinos() {
@@ -559,9 +623,8 @@ async function enviarDatos() {
     }));
     setEstado('ok', `✓ ${state.ninos.length} participantes enviados correctamente`);
     state.totalEnviados += state.ninos.length;
-    document.getElementById('grupos-enviados').style.display = '';
     actualizarContador();
-    setTimeout(() => { document.getElementById('btn-enviar').style.display = 'none'; }, 600);
+    setTimeout(mostrarExito, 900);
   } catch (err) {
     console.error(err);
     setEstado('error', '✗ Error al enviar. Comprueba la conexión e inténtalo de nuevo.');
@@ -590,6 +653,66 @@ function actualizarContador() {
   document.getElementById('lista-grupos-enviados').innerHTML =
     `<span class="grupo-badge">✓ ${t} participante${t !== 1 ? 's' : ''} inscritos en esta sesión</span>`;
 }
+
+// ─── AUTOGUARDADO ─────────────────────────────────────────────────────────────
+const BORRADOR_KEY = 'judobase_borrador';
+
+function guardarBorrador() {
+  const ninos = recogerNinos();
+  if (!state.club && ninos.length === 0) return;
+  localStorage.setItem(BORRADOR_KEY, JSON.stringify({ club: state.club, ninos, ts: Date.now() }));
+}
+
+function limpiarBorrador() {
+  localStorage.removeItem(BORRADOR_KEY);
+}
+
+function restaurarBorrador() {
+  try {
+    const raw = localStorage.getItem(BORRADOR_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data.club || !data.ninos?.length) return;
+    const banner = document.getElementById('banner-restaurar');
+    document.getElementById('banner-club').textContent = data.club;
+    banner.style.display = 'flex';
+    document.getElementById('btn-restaurar-si').onclick = () => {
+      banner.style.display = 'none';
+      document.getElementById('select-club').value = data.club;
+      state.club = data.club;
+      document.getElementById('info-club-display').innerHTML =
+        `Club: <strong style="color:#fff">${data.club}</strong> — Datos restaurados automáticamente.`;
+      document.getElementById('lista-ninos').innerHTML = '';
+      ninoId = 0;
+      data.ninos.forEach(n => {
+        addNino(n.nombre, n.apellidos);
+        const fila = document.querySelector('#lista-ninos .fila-nino:last-child');
+        const catSel = fila.querySelector('.inp-categoria');
+        catSel.value = n.categoria;
+        onCatChange(catSel);
+        const modSelect = fila.querySelector('.inp-modalidad');
+        if (modSelect) modSelect.value = n.modalidad;
+        fila.querySelector('.inp-peso').value = n.peso;
+        fila.querySelector('.inp-sexo').value = n.sexo;
+        checkPeso(fila);
+      });
+      irPaso(2);
+    };
+    document.getElementById('btn-restaurar-no').onclick = () => {
+      banner.style.display = 'none';
+      limpiarBorrador();
+    };
+  } catch (e) {
+    localStorage.removeItem(BORRADOR_KEY);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  restaurarBorrador();
+  const lista = document.getElementById('lista-ninos');
+  lista.addEventListener('input', guardarBorrador);
+  lista.addEventListener('change', guardarBorrador);
+});
 </script>
 </body>
 </html>
