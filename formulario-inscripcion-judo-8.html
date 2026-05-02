@@ -353,9 +353,10 @@
       <h2>¡Inscripción enviada!</h2>
       <p id="exito-resumen"></p>
       <p>Los datos han quedado registrados en el sistema del torneo.</p>
-      <p class="sub">Si necesitas inscribir participantes de otro club, recarga la página.</p>
-      <div style="margin-top:28px;">
-        <button class="btn btn-secondary" onclick="location.reload()">Inscribir otro club</button>
+      <p class="sub">Si necesitas inscribir participantes de <strong>otro club</strong>, recarga la página. Si quieres inscribir a alguien del <strong>mismo club</strong>, pulsa el botón de abajo.</p>
+      <div style="margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="location.reload()">↺ Inscribir otro club</button>
+        <button class="btn btn-primary" onclick="nuevoEnvio()">＋ Inscribir mismo club</button>
       </div>
     </div>
   </div>
