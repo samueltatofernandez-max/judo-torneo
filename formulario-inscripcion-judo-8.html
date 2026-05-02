@@ -346,6 +346,33 @@ const TURNOS = {
 };
 const SOLO_PROMOCION = ['Biberón', 'Prebenjamín', 'Benjamín B'];
 
+const PESO_RANGOS = {
+  'Biberón':     { min: 12, max: 30 },
+  'Prebenjamín': { min: 14, max: 36 },
+  'Benjamín B':  { min: 16, max: 42 },
+  'Benjamín A':  { min: 18, max: 52 },
+  'Alevín':      { min: 22, max: 62 },
+};
+
+function normalizarTexto(str) {
+  return str.trim().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function checkPeso(fila) {
+  const cat = fila.querySelector('.inp-categoria').value;
+  const pesoInput = fila.querySelector('.inp-peso');
+  const peso = parseFloat(pesoInput.value);
+  const rango = PESO_RANGOS[cat];
+  if (!rango || !peso) { pesoInput.style.borderColor = ''; pesoInput.title = ''; return; }
+  if (peso < rango.min || peso > rango.max) {
+    pesoInput.style.borderColor = 'var(--amarillo)';
+    pesoInput.title = `⚠ Peso inusual para ${cat} (rango habitual: ${rango.min}–${rango.max} kg)`;
+  } else {
+    pesoInput.style.borderColor = '';
+    pesoInput.title = '';
+  }
+}
+
 let state = { club: '', ninos: [], totalEnviados: 0 };
 let ninoId = 0;
 
@@ -443,6 +470,10 @@ function addNino(nombre='', apellidos='') {
     <button class="btn-del" onclick="delNino(${id})" title="Eliminar">✕</button>
   `;
   document.getElementById('lista-ninos').appendChild(div);
+  const normOnBlur = e => { e.target.value = normalizarTexto(e.target.value); };
+  div.querySelector('.inp-nombre').addEventListener('blur', normOnBlur);
+  div.querySelector('.inp-apellidos').addEventListener('blur', normOnBlur);
+  div.querySelector('.inp-peso').addEventListener('input', () => checkPeso(div));
   if (!nombre) div.querySelector('.inp-nombre').focus();
 }
 
@@ -465,6 +496,7 @@ function onCatChange(sel) {
         </select>
       </div>`;
   }
+  checkPeso(sel.closest('.fila-nino'));
 }
 
 function delNino(id) {
