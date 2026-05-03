@@ -91,15 +91,15 @@
   .tabla-wrap { overflow-x: auto; }
   .tabla-header {
     display: grid;
-    grid-template-columns: 1.2fr 1.2fr 130px 120px 72px 110px 34px;
-    gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--borde); margin-bottom: 8px; min-width: 760px;
+    grid-template-columns: 1.2fr 1.2fr 100px 130px 120px 72px 110px 34px;
+    gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--borde); margin-bottom: 8px; min-width: 860px;
   }
   .tabla-header span { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--texto-apagado); }
 
   .fila-nino {
     display: grid;
-    grid-template-columns: 1.2fr 1.2fr 130px 120px 72px 110px 34px;
-    gap: 8px; margin-bottom: 8px; align-items: center; animation: fadeIn .2s ease; min-width: 760px;
+    grid-template-columns: 1.2fr 1.2fr 100px 130px 120px 72px 110px 34px;
+    gap: 8px; margin-bottom: 8px; align-items: center; animation: fadeIn .2s ease; min-width: 860px;
   }
   @keyframes fadeIn { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: none; } }
   .fila-nino input, .fila-nino select { font-size: 13px; padding: 8px 10px; }
@@ -316,7 +316,7 @@
         En tu Excel, selecciona toda la columna de <strong style="color:#fff;">nombres</strong> → cópiala (Ctrl+C) → pégala abajo.<br>
         Luego haz lo mismo con la columna de <strong style="color:#fff;">apellidos</strong>. Las filas se crearán solas.
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
         <div>
           <label style="font-size:11px; color:var(--texto-apagado); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px;">
             1. Pega aquí la columna de NOMBRES
@@ -329,6 +329,12 @@
           </label>
           <textarea id="paste-apellidos" rows="5" placeholder="García López&#10;Rodríguez Pérez&#10;Martínez Blanco&#10;..." style="width:100%; background:var(--gris-medio); border:1px solid var(--borde); border-radius:6px; padding:10px; color:var(--texto); font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; outline:none;"></textarea>
         </div>
+        <div>
+          <label style="font-size:11px; color:var(--texto-apagado); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px;">
+            3. Pega aquí la columna de F. NACIMIENTO <span style="color:#555">(opcional)</span>
+          </label>
+          <textarea id="paste-fnac" rows="5" placeholder="01/05/2015&#10;15/03/2014&#10;..." style="width:100%; background:var(--gris-medio); border:1px solid var(--borde); border-radius:6px; padding:10px; color:var(--texto); font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; outline:none;"></textarea>
+        </div>
       </div>
       <button class="btn btn-primary" onclick="pegarMasivo()" style="font-size:13px;">⚡ Crear filas con estos datos</button>
       <span id="paste-estado" style="font-size:12px; color:var(--texto-apagado); margin-left:12px;"></span>
@@ -338,6 +344,7 @@
       <div class="tabla-header">
         <span>Nombre</span>
         <span>Apellidos</span>
+        <span>F. Nacimiento</span>
         <span>Categoría</span>
         <span>Modalidad</span>
         <span>Peso (kg)</span>
@@ -536,7 +543,7 @@ function irPaso3() {
 }
 
 // ─── FILAS ────────────────────────────────────────────────────────────────────
-function addNino(nombre='', apellidos='') {
+function addNino(nombre='', apellidos='', fnac='') {
   const id = ++ninoId;
   const div = document.createElement('div');
   div.className = 'fila-nino';
@@ -544,6 +551,7 @@ function addNino(nombre='', apellidos='') {
   div.innerHTML = `
     <input type="text" placeholder="Nombre" class="inp-nombre" value="${nombre}" autocomplete="off">
     <input type="text" placeholder="Apellidos" class="inp-apellidos" value="${apellidos}" autocomplete="off">
+    <input type="text" placeholder="DD/MM/AAAA" class="inp-fnac" value="${fnac}" autocomplete="off" style="font-size:12px;">
     <div class="select-wrap">
       <select class="inp-categoria" onchange="onCatChange(this)">
         <option value="">Categoría</option>
@@ -612,6 +620,7 @@ function delNino(id) {
 function pegarMasivo() {
   const nombres = document.getElementById('paste-nombres').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
   const apellidos = document.getElementById('paste-apellidos').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+  const fnacs = document.getElementById('paste-fnac').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
   const estado = document.getElementById('paste-estado');
   if (!nombres.length && !apellidos.length) {
     estado.innerHTML = '<span style="color:#e88">⚠️ Pega al menos los nombres</span>'; return;
@@ -622,25 +631,28 @@ function pegarMasivo() {
   for (; i < filasExistentes.length && i < total; i++) {
     if (nombres[i]) filasExistentes[i].querySelector('.inp-nombre').value = nombres[i];
     if (apellidos[i]) filasExistentes[i].querySelector('.inp-apellidos').value = apellidos[i];
+    if (fnacs[i]) filasExistentes[i].querySelector('.inp-fnac').value = fnacs[i];
   }
-  for (; i < total; i++) addNino(nombres[i] || '', apellidos[i] || '');
+  for (; i < total; i++) addNino(nombres[i] || '', apellidos[i] || '', fnacs[i] || '');
   document.getElementById('paste-nombres').value = '';
   document.getElementById('paste-apellidos').value = '';
+  document.getElementById('paste-fnac').value = '';
   estado.innerHTML = `<span style="color:#4caf50">✅ ${total} participantes añadidos</span>`;
   guardarBorrador();
 }
 
 function recogerNinos() {
   return Array.from(document.querySelectorAll('.fila-nino')).map(f => {
-    const nombre = f.querySelector('.inp-nombre').value.trim();
-    const apellidos = f.querySelector('.inp-apellidos').value.trim();
+    const nombre = (f.querySelector('.inp-nombre')?.value || '').trim();
+    const apellidos = (f.querySelector('.inp-apellidos')?.value || '').trim();
+    const fnac = (f.querySelector('.inp-fnac')?.value || '').trim();
     const cat = f.querySelector('.inp-categoria').value;
     const container = f.querySelector('.inp-mod-container');
     const modFija = container.querySelector('.mod-fija:not(.mod-placeholder)');
     const modSelect = container.querySelector('.inp-modalidad');
     const modalidad = modFija ? 'Promoción' : (modSelect ? modSelect.value : '');
     return {
-      nombre, apellidos,
+      nombre, apellidos, fnac,
       categoria: cat,
       modalidad,
       peso: parseFloat(f.querySelector('.inp-peso').value) || 0,
@@ -658,7 +670,7 @@ async function enviarDatos() {
   try {
     await Promise.all(state.ninos.map(n => {
       const params = new URLSearchParams({
-        nombre: n.nombre, apellidos: n.apellidos, club: state.club, cat: n.categoria,
+        nombre: n.nombre, apellidos: n.apellidos, fnac: n.fnac, club: state.club, cat: n.categoria,
         mod: n.modalidad, sexo: n.sexo, peso: n.peso, turno: n.turno, fecha,
       });
       return fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
