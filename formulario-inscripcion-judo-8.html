@@ -136,6 +136,7 @@
   .btn-primary { background: var(--rojo); color: #fff; }
   .btn-primary:hover { background: var(--rojo-oscuro); }
   .btn-primary:disabled { background: #444; cursor: not-allowed; }
+  .aviso-peso { font-size: 11px; color: var(--amarillo); position: absolute; bottom: -16px; left: 0; white-space: nowrap; pointer-events: none; }
 
   /* RESUMEN */
   .resumen-card { background: var(--gris-medio); border: 1px solid var(--borde); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
@@ -390,15 +391,20 @@ function normalizarTexto(str) {
 function checkPeso(fila) {
   const cat = fila.querySelector('.inp-categoria').value;
   const pesoInput = fila.querySelector('.inp-peso');
+  const avisoEl = fila.querySelector('.aviso-peso');
   const peso = parseFloat(pesoInput.value);
   const rango = PESO_RANGOS[cat];
-  if (!rango || !peso) { pesoInput.style.borderColor = ''; pesoInput.title = ''; return; }
+  if (!rango || !peso) {
+    pesoInput.style.borderColor = '';
+    if (avisoEl) avisoEl.textContent = '';
+    return;
+  }
   if (peso < rango.min || peso > rango.max) {
     pesoInput.style.borderColor = 'var(--amarillo)';
-    pesoInput.title = `⚠ Peso inusual para ${cat} (rango habitual: ${rango.min}–${rango.max} kg)`;
+    if (avisoEl) avisoEl.textContent = `⚠ Peso inusual para ${cat} (rango habitual: ${rango.min}–${rango.max} kg)`;
   } else {
     pesoInput.style.borderColor = '';
-    pesoInput.title = '';
+    if (avisoEl) avisoEl.textContent = '';
   }
 }
 
@@ -523,7 +529,10 @@ function addNino(nombre='', apellidos='') {
     <div class="inp-mod-container">
       <div class="mod-fija mod-placeholder">—</div>
     </div>
-    <input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off">
+    <div style="position:relative">
+      <input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off" style="width:100%">
+      <div class="aviso-peso"></div>
+    </div>
     <div class="select-wrap">
       <select class="inp-sexo">
         <option value="">Sexo</option>
