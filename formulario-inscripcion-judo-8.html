@@ -177,6 +177,33 @@
     .container { padding: 20px 12px 50px; }
     .steps .step { font-size: 10px; }
     header { padding: 14px 16px; }
+
+    .tabla-wrap { overflow-x: visible; }
+    .tabla-header { display: none; }
+
+    .fila-nino {
+      display: grid;
+      grid-template-columns: 1fr 1fr 34px;
+      min-width: unset;
+      gap: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    .fila-nino > *:nth-child(1) { grid-column: 1; }
+    .fila-nino > *:nth-child(2) { grid-column: 2; }
+    .fila-nino > *:nth-child(3) { grid-column: 1 / -1; }
+    .fila-nino > *:nth-child(4) { grid-column: 1 / -1; }
+    .fila-nino > *:nth-child(5) { grid-column: 1; }
+    .fila-nino > *:nth-child(6) { grid-column: 2 / -1; }
+    .fila-nino > *:nth-child(7) { grid-column: 3; grid-row: 1; align-self: center; }
+
+    .fila-nino input, .fila-nino select { font-size: 14px; width: 100%; box-sizing: border-box; }
+    .aviso-peso { padding: 0 10px 4px; }
+
+    .btn-add { width: 100%; box-sizing: border-box; }
   }
 
   .error-inline { color: #e74c3c; font-size: 13px; font-weight: 600; margin-top: 10px; display: none; }
