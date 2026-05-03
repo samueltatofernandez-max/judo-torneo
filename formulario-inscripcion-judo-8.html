@@ -136,7 +136,8 @@
   .btn-primary { background: var(--rojo); color: #fff; }
   .btn-primary:hover { background: var(--rojo-oscuro); }
   .btn-primary:disabled { background: #444; cursor: not-allowed; }
-  .aviso-peso { font-size: 11px; color: var(--amarillo); margin-top: 3px; line-height: 1.2; }
+  .aviso-peso { font-size: 12px; color: var(--amarillo); padding: 2px 4px 6px; }
+  .aviso-peso:empty { display: none; }
 
   /* RESUMEN */
   .resumen-card { background: var(--gris-medio); border: 1px solid var(--borde); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
@@ -391,7 +392,7 @@ function normalizarTexto(str) {
 function checkPeso(fila) {
   const cat = fila.querySelector('.inp-categoria').value;
   const pesoInput = fila.querySelector('.inp-peso');
-  const avisoEl = fila.querySelector('.aviso-peso');
+  const avisoEl = document.getElementById(fila.id.replace('fila-', 'aviso-'));
   const peso = parseFloat(pesoInput.value);
   const rango = PESO_RANGOS[cat];
   if (!rango || !peso) {
@@ -529,10 +530,7 @@ function addNino(nombre='', apellidos='') {
     <div class="inp-mod-container">
       <div class="mod-fija mod-placeholder">—</div>
     </div>
-    <div>
-      <input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off" style="width:100%">
-      <div class="aviso-peso"></div>
-    </div>
+    <input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off">
     <div class="select-wrap">
       <select class="inp-sexo">
         <option value="">Sexo</option>
@@ -542,7 +540,12 @@ function addNino(nombre='', apellidos='') {
     </div>
     <button class="btn-del" onclick="delNino(${id})" title="Eliminar">✕</button>
   `;
-  document.getElementById('lista-ninos').appendChild(div);
+  const aviso = document.createElement('div');
+  aviso.className = 'aviso-peso';
+  aviso.id = 'aviso-' + id;
+  const lista = document.getElementById('lista-ninos');
+  lista.appendChild(div);
+  lista.appendChild(aviso);
   const normOnBlur = e => { e.target.value = normalizarTexto(e.target.value); };
   div.querySelector('.inp-nombre').addEventListener('blur', normOnBlur);
   div.querySelector('.inp-apellidos').addEventListener('blur', normOnBlur);
@@ -574,7 +577,9 @@ function onCatChange(sel) {
 
 function delNino(id) {
   const el = document.getElementById('fila-' + id);
+  const aviso = document.getElementById('aviso-' + id);
   if (el) el.remove();
+  if (aviso) aviso.remove();
 }
 
 function pegarMasivo() {
@@ -696,7 +701,8 @@ function restaurarBorrador() {
       ninoId = 0;
       data.ninos.forEach(n => {
         addNino(n.nombre, n.apellidos);
-        const fila = document.querySelector('#lista-ninos .fila-nino:last-child');
+        const filas = document.querySelectorAll('#lista-ninos .fila-nino');
+        const fila = filas[filas.length - 1];
         const catSel = fila.querySelector('.inp-categoria');
         catSel.value = n.categoria;
         onCatChange(catSel);
