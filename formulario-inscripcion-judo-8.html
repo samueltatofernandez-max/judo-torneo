@@ -136,7 +136,7 @@
   .btn-primary { background: var(--rojo); color: #fff; }
   .btn-primary:hover { background: var(--rojo-oscuro); }
   .btn-primary:disabled { background: #444; cursor: not-allowed; }
-  .aviso-peso { font-size: 11px; color: var(--amarillo); position: absolute; bottom: -16px; left: 0; white-space: nowrap; pointer-events: none; }
+  .aviso-peso { font-size: 11px; color: var(--amarillo); margin-top: 3px; line-height: 1.2; }
 
   /* RESUMEN */
   .resumen-card { background: var(--gris-medio); border: 1px solid var(--borde); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
@@ -529,7 +529,7 @@ function addNino(nombre='', apellidos='') {
     <div class="inp-mod-container">
       <div class="mod-fija mod-placeholder">—</div>
     </div>
-    <div style="position:relative">
+    <div>
       <input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off" style="width:100%">
       <div class="aviso-peso"></div>
     </div>
