@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscripción — CAMPEONATO A ESTRADA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rojo: #c0392b;
+    --rojo-oscuro: #96281b;
+    --negro: #0f0f0f;
+    --gris-oscuro: #1a1a1a;
+    --gris-medio: #2a2a2a;
+    --gris-panel: #222;
+    --borde: #333;
+    --texto: #e8e8e8;
+    --texto-apagado: #888;
+    --blanco: #fff;
+    --amarillo: #f0c040;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--negro); color: var(--texto); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  header {
+    background: var(--gris-oscuro); border-bottom: 3px solid var(--rojo);
+    padding: 18px 32px; display: flex; align-items: center; gap: 20px;
+  }
+  .logo-circle {
+    width: 52px; height: 52px; background: var(--rojo); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #fff; letter-spacing: 1px; flex-shrink: 0;
+  }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #fff; line-height: 1.1; }
+  header p { font-size: 13px; color: var(--texto-apagado); margin-top: 2px; }
+
+  .container { max-width: 980px; margin: 0 auto; padding: 36px 24px 60px; }
+
+  .steps { display: flex; margin-bottom: 36px; }
+  .step {
+    flex: 1; text-align: center; padding: 12px 8px;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--texto-apagado); border-bottom: 3px solid var(--borde); transition: all .2s;
+  }
+  .step.active { color: var(--rojo); border-color: var(--rojo); }
+  .step.done { color: #4caf50; border-color: #4caf50; }
+  .step-num {
+    display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--borde); color: var(--texto-apagado);
+    font-size: 11px; line-height: 22px; margin-bottom: 4px; transition: all .2s;
+  }
+  .step.active .step-num { background: var(--rojo); color: #fff; }
+  .step.done .step-num { background: #4caf50; color: #fff; }
+
+  .panel { background: var(--gris-panel); border: 1px solid var(--borde); border-radius: 8px; padding: 28px; margin-bottom: 20px; display: none; }
+  .panel.active { display: block; }
+  .panel-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px;
+    color: var(--blanco); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+  }
+  .panel-title span.tag {
+    font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
+    background: var(--rojo); color: #fff; padding: 3px 8px; border-radius: 3px; letter-spacing: 1px;
+  }
+
+  label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--texto-apagado); margin-bottom: 6px; }
+
+  input[type="text"], input[type="number"], select {
+    width: 100%; background: var(--gris-medio); border: 1px solid var(--borde);
+    border-radius: 5px; padding: 11px 14px; color: var(--texto);
+    font-family: 'DM Sans', sans-serif; font-size: 15px; outline: none;
+    transition: border-color .2s; appearance: none; -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--rojo); }
+  select option { background: var(--gris-oscuro); }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    color: var(--texto-apagado); pointer-events: none; font-size: 13px;
+  }
+
+  .info-box {
+    background: rgba(192,57,43,.12); border-left: 3px solid var(--rojo);
+    border-radius: 4px; padding: 12px 16px; font-size: 13px; color: #ccc; margin-bottom: 20px; line-height: 1.5;
+  }
+  .info-box strong { color: var(--amarillo); }
+
+  /* TABLA */
+  .tabla-wrap { overflow-x: auto; }
+  .tabla-header {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 100px 130px 120px 72px 110px 34px;
+    gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--borde); margin-bottom: 8px; min-width: 860px;
+  }
+  .tabla-header span { font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--texto-apagado); }
+
+  .fila-nino {
+    display: grid;
+    grid-template-columns: 1.2fr 1.2fr 100px 130px 120px 72px 110px 34px;
+    gap: 8px; margin-bottom: 8px; align-items: center; animation: fadeIn .2s ease; min-width: 860px;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(-4px); } to { opacity:1; transform: none; } }
+  .fila-nino input, .fila-nino select { font-size: 13px; padding: 8px 10px; }
+
+  .mod-fija {
+    font-size: 12px; color: var(--texto-apagado); background: var(--gris-medio);
+    border: 1px solid var(--borde); border-radius: 5px; padding: 8px 10px; white-space: nowrap;
+  }
+  .mod-placeholder { color: #3a3a3a; border-color: #2a2a2a; }
+
+  .btn-del {
+    width: 34px; height: 36px; background: transparent; border: 1px solid #444;
+    border-radius: 5px; color: #666; font-size: 15px; cursor: pointer;
+    transition: all .15s; display: flex; align-items: center; justify-content: center;
+  }
+  .btn-del:hover { background: #500; border-color: var(--rojo); color: var(--rojo); }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 8px; background: transparent;
+    border: 1px dashed #444; border-radius: 5px; color: var(--texto-apagado);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 9px 16px; cursor: pointer; width: 100%; margin-top: 8px;
+    transition: all .15s; justify-content: center;
+  }
+  .btn-add:hover { border-color: var(--rojo); color: var(--rojo); }
+
+  .nav-btns { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+  .btn {
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    padding: 11px 28px; border-radius: 5px; cursor: pointer; border: none; transition: all .15s;
+  }
+  .btn-secondary { background: var(--gris-medio); color: var(--texto-apagado); border: 1px solid var(--borde); }
+  .btn-secondary:hover { color: var(--texto); }
+  .btn-primary { background: var(--rojo); color: #fff; }
+  .btn-primary:hover { background: var(--rojo-oscuro); }
+  .btn-primary:disabled { background: #444; cursor: not-allowed; }
+  .aviso-peso { font-size: 12px; color: var(--amarillo); padding: 2px 4px 6px; }
+  .aviso-peso:empty { display: none; }
+
+  /* RESUMEN */
+  .resumen-card { background: var(--gris-medio); border: 1px solid var(--borde); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
+  .resumen-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; color: #fff; margin-bottom: 10px; }
+  .resumen-nino { font-size: 13px; color: var(--texto); padding: 6px 0; border-bottom: 1px solid var(--borde); display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .resumen-nino:last-child { border-bottom: none; }
+  .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tag-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 3px; background: var(--borde); color: var(--texto-apagado); }
+  .tag-badge.elite { background: rgba(240,192,64,.15); color: var(--amarillo); }
+  .peso-badge { font-size: 12px; font-weight: 600; background: var(--borde); color: var(--texto-apagado); padding: 2px 8px; border-radius: 3px; }
+
+  .estado-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+  .estado-enviando { background: rgba(255,200,0,.15); color: var(--amarillo); }
+  .estado-ok { background: rgba(76,175,80,.15); color: #4caf50; }
+  .estado-error { background: rgba(192,57,43,.15); color: var(--rojo); }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,200,0,.3); border-top-color: var(--amarillo); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .grupos-enviados { margin-top: 20px; }
+  .grupos-enviados h3 { font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--texto-apagado); margin-bottom: 10px; }
+  .grupo-badge { display: inline-flex; align-items: center; background: rgba(76,175,80,.12); border: 1px solid rgba(76,175,80,.3); border-radius: 4px; padding: 5px 10px; margin: 3px; font-size: 12px; color: #4caf50; }
+  .otro-grupo-btn {
+    display: flex; align-items: center; gap: 8px; background: transparent;
+    border: 1px solid #333; border-radius: 5px; color: var(--texto-apagado);
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 10px 18px; cursor: pointer; transition: all .15s; margin-top: 16px;
+  }
+  .otro-grupo-btn:hover { border-color: var(--amarillo); color: var(--amarillo); }
+
+  .exito { text-align: center; padding: 48px 24px; }
+  .exito .icono { font-size: 56px; margin-bottom: 20px; }
+  .exito h2 { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 3px; color: #fff; margin-bottom: 12px; }
+  .exito p { font-size: 15px; color: var(--texto-apagado); margin-bottom: 8px; }
+  .exito .sub { font-size: 13px; color: #555; margin-top: 24px; }
+
+
+  /* ── ADMIN ── */
+  .admin-btn {
+    position: fixed; top: 16px; right: 20px; z-index: 1000;
+    background: transparent; border: none; cursor: pointer;
+    font-size: 18px; opacity: 0.3; transition: opacity 0.2s;
+    color: var(--texto-apagado);
+  }
+  .admin-btn:hover { opacity: 0.8; }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 2000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--gris-oscuro); border: 1px solid var(--borde);
+    border-radius: 10px; padding: 28px; width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto; position: relative;
+  }
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+    letter-spacing: 2px; color: #fff; margin-bottom: 20px;
+    border-bottom: 2px solid var(--rojo); padding-bottom: 10px;
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: none; border: none; color: var(--texto-apagado);
+    font-size: 20px; cursor: pointer;
+  }
+  .admin-section { margin-bottom: 24px; }
+  .admin-section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--rojo); margin-bottom: 12px;
+    border-bottom: 1px solid #333; padding-bottom: 6px;
+  }
+  .club-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 4px; font-size: 13px;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .club-item:hover { background: rgba(255,255,255,0.04); }
+  .club-item input[type=checkbox] { accent-color: var(--rojo); width: 15px; height: 15px; }
+  .cat-admin-row {
+    display: grid; grid-template-columns: 1.2fr 1fr 1fr auto;
+    gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px;
+  }
+  .cat-admin-row input { font-size: 12px; padding: 6px 8px; }
+  .btn-admin {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+    padding: 9px 20px; border-radius: 5px; cursor: pointer; border: none;
+    background: var(--rojo); color: #fff; transition: background 0.15s;
+  }
+  .btn-admin:hover { background: var(--rojo-oscuro); }
+  .btn-admin-outline {
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 6px 14px; border-radius: 5px; cursor: pointer;
+    border: 1px solid var(--borde); background: transparent;
+    color: var(--texto-apagado); transition: all 0.15s;
+  }
+  .btn-admin-outline:hover { border-color: var(--rojo); color: var(--rojo); }
+  .admin-msg { font-size: 12px; margin-top: 10px; padding: 8px 12px; border-radius: 4px; }
+  .admin-msg.ok { background: rgba(76,175,80,0.15); color: #4caf50; }
+  .admin-msg.err { background: rgba(192,57,43,0.15); color: var(--rojo); }
+  .tabs-admin { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 1px solid var(--borde); }
+  .tab-admin {
+    padding: 8px 16px; font-size: 12px; font-weight: 600; cursor: pointer;
+    border: none; background: none; color: var(--texto-apagado);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
+  }
+  .tab-admin.active { color: var(--rojo); border-bottom-color: var(--rojo); }
+  .tab-admin-panel { display: none; }
+  .tab-admin-panel.active { display: block; }
+  .peso-rango-row { display: grid; grid-template-columns: 1.2fr 80px 80px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+  .peso-rango-row input { font-size: 12px; padding: 6px 8px; }
+
+  @media (max-width: 640px) {
+    .container { padding: 20px 12px 50px; }
+    .steps .step { font-size: 10px; }
+    header { padding: 14px 16px; }
+
+    .tabla-wrap { overflow-x: visible; }
+    .tabla-header { display: none; }
+
+    .fila-nino {
+      display: grid;
+      grid-template-columns: 1fr 1fr 34px;
+      min-width: unset;
+      gap: 6px;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.02);
+    }
+    .fila-nino > *:nth-child(1) { grid-column: 1; }
+    .fila-nino > *:nth-child(2) { grid-column: 2; }
+    .fila-nino > *:nth-child(3) { grid-column: 1 / -1; }
+    .fila-nino > *:nth-child(4) { grid-column: 1 / -1; }
+    .fila-nino > *:nth-child(5) { grid-column: 1; }
+    .fila-nino > *:nth-child(6) { grid-column: 2 / -1; }
+    .fila-nino > *:nth-child(7) { grid-column: 3; grid-row: 1; align-self: center; }
+
+    .fila-nino input, .fila-nino select { font-size: 14px; width: 100%; box-sizing: border-box; }
+    .aviso-peso { padding: 0 10px 4px; }
+
+    .btn-add { width: 100%; box-sizing: border-box; }
+  }
+
+  .error-inline { color: #e74c3c; font-size: 13px; font-weight: 600; margin-top: 10px; display: none; }
+  .error-inline.visible { display: block; }
+
+  .banner-restaurar {
+    background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.35);
+    border-radius: 6px; padding: 13px 18px; margin-bottom: 20px;
+    font-size: 13px; color: #ccc; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .banner-restaurar strong { color: #fff; }
+
+  .aviso-dup {
+    background: rgba(240,192,64,0.08); border-left: 3px solid var(--amarillo);
+    border-radius: 4px; padding: 10px 14px; font-size: 13px; color: #ccc;
+    margin-bottom: 14px; line-height: 1.5;
+  }
+  .aviso-dup strong { color: var(--amarillo); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-circle">JUDO</div>
+  <div style="flex:1;">
+    <h1>CAMPEONATO A ESTRADA</h1>
+    <p>Formulario de inscripción de participantes</p>
+  </div>
+  <button onclick="abrirLogin()" title="Administración" style="background:none;border:none;cursor:pointer;font-size:20px;opacity:0.3;color:#fff;padding:4px;transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=0.3">⚙️</button>
+</header>
+
+
+<!-- Modal Login -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal" style="max-width:360px;">
+    <button class="modal-close" onclick="cerrarLogin()">✕</button>
+    <div class="modal-title">🔐 Acceso Admin</div>
+    <div style="margin-bottom:14px;">
+      <label>Usuario</label>
+      <input type="text" id="login-user" placeholder="Usuario" autocomplete="off">
+    </div>
+    <div style="margin-bottom:18px;">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')validarLogin()">
+    </div>
+    <div id="login-msg" style="display:none;" class="admin-msg err">Usuario o contraseña incorrectos</div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-admin-outline" onclick="cerrarLogin()">Cancelar</button>
+      <button class="btn-admin" onclick="validarLogin()">Entrar</button>
+    </div>
+    <div id="login-loading" style="display:none;text-align:center;padding:8px;font-size:12px;color:var(--texto-apagado);">Verificando…</div>
+  </div>
+</div>
+
+<!-- Modal Admin -->
+<div class="modal-overlay" id="modal-admin">
+  <div class="modal" style="max-width:680px;">
+    <button class="modal-close" onclick="cerrarAdmin()">✕</button>
+    <div class="modal-title">⚙️ Panel de Administración</div>
+
+    <div class="tabs-admin">
+      <button class="tab-admin active" onclick="showAdminTab('torneo',this)">🏆 Torneo</button>
+      <button class="tab-admin" onclick="showAdminTab('clubs',this)">🥋 Clubs</button>
+      <button class="tab-admin" onclick="showAdminTab('categorias',this)">📋 Categorías</button>
+      <button class="tab-admin" onclick="showAdminTab('pesos',this)">⚖️ Pesos</button>
+      <button class="tab-admin" onclick="showAdminTab('acceso',this)">🔐 Acceso</button>
+    </div>
+
+    <!-- Tab Torneo -->
+    <div class="tab-admin-panel active" id="tab-torneo">
+      <div class="admin-section">
+        <div class="admin-section-title">Información del torneo</div>
+        <div style="margin-bottom:12px;">
+          <label>Nombre del torneo</label>
+          <input type="text" id="adm-titulo" placeholder="CAMPEONATO A ESTRADA">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label>Fecha</label>
+          <input type="text" id="adm-fecha" placeholder="13 de junio de 2026">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label>Lugar</label>
+          <input type="text" id="adm-lugar" placeholder="Pabellón Municipal">
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Clubs -->
+    <div class="tab-admin-panel" id="tab-clubs">
+      <div class="admin-section">
+        <div class="admin-section-title">Clubs participantes</div>
+        <div style="font-size:12px;color:var(--texto-apagado);margin-bottom:12px;">Marca los clubs que participan en este torneo. Los demás no aparecerán en el formulario.</div>
+        <div style="margin-bottom:10px;">
+          <input type="text" id="adm-club-search" placeholder="🔍 Buscar club…" oninput="filtrarClubsAdmin()" style="font-size:13px;padding:8px 12px;">
+        </div>
+        <div id="adm-clubs-list" style="max-height:300px;overflow-y:auto;border:1px solid var(--borde);border-radius:6px;padding:8px;"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn-admin-outline" onclick="seleccionarTodosClubs(true)">Todos</button>
+          <button class="btn-admin-outline" onclick="seleccionarTodosClubs(false)">Ninguno</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Categorías -->
+    <div class="tab-admin-panel" id="tab-categorias">
+      <div class="admin-section">
+        <div class="admin-section-title">Categorías activas</div>
+        <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr auto;gap:8px;padding:0 0 8px;font-size:10px;color:var(--texto-apagado);text-transform:uppercase;letter-spacing:0.5px;">
+          <span>Categoría</span><span>Años válidos</span><span>Modalidad</span><span></span>
+        </div>
+        <div id="adm-cats-list"></div>
+      </div>
+    </div>
+
+    <!-- Tab Pesos -->
+    <div class="tab-admin-panel" id="tab-pesos">
+      <div class="admin-section">
+        <div class="admin-section-title">Rangos de peso por categoría</div>
+        <div style="font-size:12px;color:var(--texto-apagado);margin-bottom:12px;">Define el rango habitual de cada categoría. Si un niño está fuera del rango saldrá un aviso amarillo.</div>
+        <div style="display:grid;grid-template-columns:1.2fr 80px 80px;gap:8px;padding:0 0 8px;font-size:10px;color:var(--texto-apagado);text-transform:uppercase;letter-spacing:0.5px;">
+          <span>Categoría</span><span>Mín (kg)</span><span>Máx (kg)</span>
+        </div>
+        <div id="adm-pesos-list"></div>
+      </div>
+    </div>
+
+    <!-- Tab Acceso -->
+    <div class="tab-admin-panel" id="tab-acceso">
+      <div class="admin-section">
+        <div class="admin-section-title">Cambiar credenciales</div>
+        <div style="margin-bottom:12px;">
+          <label>Nuevo usuario</label>
+          <input type="text" id="adm-nuevo-user" placeholder="Usuario" autocomplete="off">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label>Nueva contraseña</label>
+          <input type="password" id="adm-nuevo-pass" placeholder="Contraseña">
+        </div>
+        <div style="margin-bottom:12px;">
+          <label>Confirmar contraseña</label>
+          <input type="password" id="adm-nuevo-pass2" placeholder="Repetir contraseña">
+        </div>
+      </div>
+    </div>
+
+    <div id="adm-msg" style="display:none;" class="admin-msg ok"></div>
+    <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-admin-outline" onclick="cerrarAdmin()">Cancelar</button>
+      <button class="btn-admin" onclick="guardarConfigAdmin()">💾 Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div id="banner-restaurar" class="banner-restaurar" style="display:none;">
+    📋 Tienes un borrador guardado del club <strong id="banner-club"></strong>.
+    <button id="btn-restaurar-si" class="btn btn-primary" style="font-size:12px;padding:6px 14px;">Restaurar</button>
+    <button id="btn-restaurar-no" class="btn btn-secondary" style="font-size:12px;padding:6px 14px;">Descartar</button>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step1-ind"><div class="step-num">1</div><br>Club</div>
+    <div class="step" id="step2-ind"><div class="step-num">2</div><br>Participantes</div>
+    <div class="step" id="step3-ind"><div class="step-num">3</div><br>Confirmar</div>
+  </div>
+
+  <!-- PASO 1: CLUB -->
+  <div class="panel active" id="panel1">
+    <div class="panel-title">Selecciona tu club <span class="tag">PASO 1</span></div>
+    <div class="info-box">
+      Selecciona tu club. En el siguiente paso podrás añadir todos los participantes a la vez, <strong>mezclando categorías</strong>.
+    </div>
+    <div style="max-width:420px;">
+      <label>Club</label>
+      <div class="select-wrap">
+        <select id="select-club">
+          <option value="">— Selecciona tu club —</option>
+          <option>Judo Club Arteixo</option>
+          <option>Judo Club Base</option>
+          <option>Judo Club Bergantinos</option>
+          <option>Judo Bitacora Ferrol</option>
+          <option>Judo Club Blume</option>
+          <option>Judo Club Cambre</option>
+          <option>Club Campolongo</option>
+          <option>Compostela Judo Club</option>
+          <option>Judo Club Coruna</option>
+          <option>Judo Club Culleredo</option>
+          <option>Club Deportivo Daigoro</option>
+          <option>Escola Judo Club</option>
+          <option>Encontro</option>
+          <option>Asociacion deportiva Famu De Frutos</option>
+          <option>Agrupacion Deportiva Judo Ferrolterra</option>
+          <option>Judo Club Ximnasio Fibra</option>
+          <option>Forte Parque Sport</option>
+          <option>Judo Club Galicia Sur</option>
+          <option>Judo Baixo Mino</option>
+          <option>Judo Club Senin</option>
+          <option>JK</option>
+          <option>AD Judo Muralla</option>
+          <option>Agrupacion Deportiva Liceo</option>
+          <option>Judo Lugo</option>
+          <option>Judo Club Lugokan</option>
+          <option>Lvcvs Dojo Club Deportivo</option>
+          <option>Agrupacion Deportiva Mamuro</option>
+          <option>Judo Club Oleiros</option>
+          <option>Orense Judo Club Marbel</option>
+          <option>Peleteiro</option>
+          <option>Judo Club Pontevedra</option>
+          <option>Gimnasio Senra</option>
+          <option>Judo Club Shiai</option>
+          <option>Titan Combat Club Galicia</option>
+          <option>Judo Club Trasno</option>
+          <option>Terras de Santiago</option>
+        </select>
+      </div>
+    </div>
+    <div id="error-paso1" class="error-inline"></div>
+    <div class="nav-btns">
+      <button class="btn btn-primary" onclick="irPaso2()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 2: PARTICIPANTES -->
+  <div class="panel" id="panel2">
+    <div class="panel-title">Participantes <span class="tag">PASO 2</span></div>
+    <div class="info-box" id="info-club-display"></div>
+
+    <!-- PEGADO MASIVO -->
+    <div style="background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.3); border-radius:8px; padding:16px 20px; margin-bottom:20px;">
+      <div style="font-size:13px; font-weight:700; color:var(--amarillo); margin-bottom:6px;">⚡ ¿Tienes los datos en Excel o una lista? Pégalos aquí directamente</div>
+      <div style="font-size:12px; color:var(--texto-apagado); margin-bottom:14px; line-height:1.6;">
+        En tu Excel, selecciona toda la columna de <strong style="color:#fff;">nombres</strong> → cópiala (Ctrl+C) → pégala abajo.<br>
+        Luego haz lo mismo con la columna de <strong style="color:#fff;">apellidos</strong>. Las filas se crearán solas.
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label style="font-size:11px; color:var(--texto-apagado); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px;">
+            1. Pega aquí la columna de NOMBRES
+          </label>
+          <textarea id="paste-nombres" rows="5" placeholder="Juan&#10;María&#10;Pedro&#10;Ana&#10;..." style="width:100%; background:var(--gris-medio); border:1px solid var(--borde); border-radius:6px; padding:10px; color:var(--texto); font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; outline:none;"></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--texto-apagado); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px;">
+            2. Pega aquí la columna de APELLIDOS
+          </label>
+          <textarea id="paste-apellidos" rows="5" placeholder="García López&#10;Rodríguez Pérez&#10;Martínez Blanco&#10;..." style="width:100%; background:var(--gris-medio); border:1px solid var(--borde); border-radius:6px; padding:10px; color:var(--texto); font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; outline:none;"></textarea>
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--texto-apagado); text-transform:uppercase; letter-spacing:0.05em; display:block; margin-bottom:6px;">
+            3. Pega aquí la columna de F. NACIMIENTO <span style="color:#555">(opcional)</span>
+          </label>
+          <textarea id="paste-fnac" rows="5" placeholder="01/05/2015&#10;15/03/2014&#10;..." style="width:100%; background:var(--gris-medio); border:1px solid var(--borde); border-radius:6px; padding:10px; color:var(--texto); font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; outline:none;"></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="pegarMasivo()" style="font-size:13px;">⚡ Crear filas con estos datos</button>
+      <span id="paste-estado" style="font-size:12px; color:var(--texto-apagado); margin-left:12px;"></span>
+    </div>
+
+    <div class="tabla-wrap">
+      <div class="tabla-header">
+        <span>Nombre</span>
+        <span>Apellidos</span>
+        <span>F. Nacimiento</span>
+        <span>Categoría</span>
+        <span>Modalidad</span>
+        <span>Peso (kg)</span>
+        <span>Sexo</span>
+        <span></span>
+      </div>
+      <div id="lista-ninos"></div>
+    </div>
+
+    <button class="btn-add" onclick="addNino()">＋ Añadir participante manualmente</button>
+
+    <div id="error-paso2" class="error-inline"></div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="irPaso(1)">← Atrás</button>
+      <button class="btn btn-primary" onclick="irPaso3()">Revisar →</button>
+    </div>
+  </div>
+
+  <!-- PASO 3: CONFIRMAR -->
+  <div class="panel" id="panel3">
+    <div class="panel-title">Confirma la inscripción <span class="tag">PASO 3</span></div>
+    <div id="aviso-duplicados" class="aviso-dup" style="display:none;">
+      ⚠ <strong>Posibles duplicados:</strong> <span id="lista-duplicados"></span> — revisa si es correcto antes de enviar.
+    </div>
+    <div id="resumen-contenido"></div>
+    <div id="estado-envio" style="margin-top:16px; text-align:center; min-height:30px;"></div>
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="irPaso(2)">← Editar</button>
+      <button class="btn btn-primary" id="btn-enviar" onclick="enviarDatos()">✓ Enviar inscripción</button>
+    </div>
+    <div class="grupos-enviados" id="grupos-enviados" style="display:none">
+      <h3>Inscritos en esta sesión</h3>
+      <div id="lista-grupos-enviados"></div>
+      <button class="otro-grupo-btn" onclick="nuevoEnvio()">＋ Añadir más participantes</button>
+    </div>
+  </div>
+
+  <!-- ÉXITO -->
+  <div class="panel" id="panel-exito">
+    <div class="exito">
+      <div class="icono">🥋</div>
+      <h2>¡Inscripción enviada!</h2>
+      <p id="exito-resumen"></p>
+      <p>Los datos han quedado registrados en el sistema del torneo.</p>
+      <p class="sub">Usa los botones de abajo para seguir inscribiendo participantes.</p>
+      <div style="margin-top:28px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="location.reload()">↺ Inscribir otro club</button>
+        <button class="btn btn-primary" onclick="nuevoEnvio()">＋ Inscribir mismo club</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhjfA-Mczy-xFRNphIncFu-SejKa_be_vq9ct4plZGLKvPQFTQe3cn8Y8nZGihOKZJ/exec';
+
+// ── Config por defecto (se sobreescribe con lo que viene de Sheets) ──
+let CONFIG = {
+  titulo: 'CAMPEONATO A ESTRADA',
+  fecha: '',
+  lugar: '',
+  clubsMaestro: [
+    'AD Judo Muralla','Agrupacion Deportiva Judo Ferrolterra','Agrupacion Deportiva Liceo',
+    'Agrupacion Deportiva Mamuro','Asociacion deportiva Famu De Frutos','Club Campolongo',
+    'Club Deportivo Daigoro','Compostela Judo Club','Encontro','Escola Judo Club',
+    'Forte Parque Sport','Gimnasio Senra','JK','Judo Baixo Mino','Judo Bitacora Ferrol',
+    'Judo Club Arteixo','Judo Club Base','Judo Club Bergantinos','Judo Club Blume',
+    'Judo Club Cambre','Judo Club Coruna','Judo Club Culleredo','Judo Club Galicia Sur',
+    'Judo Club Lugokan','Judo Club Oleiros','Judo Club Pontevedra','Judo Club Senin',
+    'Judo Club Shiai','Judo Club Trasno','Judo Club Ximnasio Fibra','Judo Lugo',
+    'Lvcvs Dojo Club Deportivo','Orense Judo Club Marbel','Peleteiro','Terras de Santiago',
+    'Titan Combat Club Galicia'
+  ],
+  clubsSeleccionados: [],
+  categorias: [
+    { nombre: 'Biberón',     curso: '4º Infantil',    anos: '2019,2018', modalidad: 'solo-promo' },
+    { nombre: 'Prebenjamín', curso: '5º-6º Infantil', anos: '2017,2016', modalidad: 'solo-promo' },
+    { nombre: 'Benjamín B',  curso: '1º-2º Primaria', anos: '2015,2014', modalidad: 'solo-promo' },
+    { nombre: 'Benjamín A',  curso: '3º-4º Primaria', anos: '2013,2012', modalidad: 'ambas' },
+    { nombre: 'Alevín',      curso: '5º-6º Primaria', anos: '2011,2010', modalidad: 'ambas' },
+  ],
+  pesoRangos: {
+    'Biberón':     { min: 12, max: 30 },
+    'Prebenjamín': { min: 14, max: 36 },
+    'Benjamín B':  { min: 16, max: 42 },
+    'Benjamín A':  { min: 18, max: 52 },
+    'Alevín':      { min: 22, max: 62 },
+  }
+};
+
+// Atajos dinámicos
+function getSolopromo() { return CONFIG.categorias.filter(c => c.modalidad === 'solo-promo').map(c => c.nombre); }
+function getPesoRangos() { return CONFIG.pesoRangos; }
+
+// ── Carga config desde Sheets al iniciar ──
+async function cargarConfigSheets() {
+  try {
+    const url = APPS_SCRIPT_URL + '?action=leerConfig&cb=' + Date.now();
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data && data.ok) {
+      if (data.titulo) CONFIG.titulo = data.titulo;
+      if (data.fecha) CONFIG.fecha = data.fecha;
+      if (data.lugar) CONFIG.lugar = data.lugar;
+      if (data.clubsMaestro?.length) CONFIG.clubsMaestro = data.clubsMaestro;
+      if (data.clubsSeleccionados?.length) CONFIG.clubsSeleccionados = data.clubsSeleccionados;
+      if (data.categorias?.length) CONFIG.categorias = data.categorias;
+      if (data.pesoRangos) CONFIG.pesoRangos = data.pesoRangos;
+      aplicarConfigUI();
+    }
+  } catch(e) {
+    console.warn('No se pudo cargar config de Sheets, usando valores por defecto');
+    aplicarConfigUI();
+  }
+}
+
+function aplicarConfigUI() {
+  // Título y subtítulo
+  document.querySelector('header h1').textContent = CONFIG.titulo;
+  document.title = 'Inscripción — ' + CONFIG.titulo;
+  if (CONFIG.fecha || CONFIG.lugar) {
+    document.querySelector('header p').textContent =
+      [CONFIG.fecha, CONFIG.lugar].filter(Boolean).join(' · ');
+  }
+  // Clubs en el select
+  const clubs = CONFIG.clubsSeleccionados.length ? CONFIG.clubsSeleccionados : CONFIG.clubsMaestro;
+  const sel = document.getElementById('select-club');
+  sel.innerHTML = '<option value="">— Selecciona tu club —</option>' +
+    clubs.sort().map(c => '<option>' + c + '</option>').join('');
+}
+
+function validarFnacInput(input) {
+  if (!input.value.trim()) { input.style.borderColor = ''; return; }
+  if (!validarFechaNac(input.value.trim())) {
+    input.style.borderColor = 'var(--rojo)';
+  } else {
+    input.style.borderColor = '#4caf50';
+  }
+}
+
+function normalizarTexto(str) {
+  return str.trim().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function checkPeso(fila) {
+  const cat = fila.querySelector('.inp-categoria').value;
+  const pesoInput = fila.querySelector('.inp-peso');
+  const avisoEl = document.getElementById(fila.id.replace('fila-', 'aviso-'));
+  const peso = parseFloat(pesoInput.value);
+  const rango = getPesoRangos()[cat];
+  if (!rango || !peso) {
+    pesoInput.style.borderColor = '';
+    if (avisoEl) avisoEl.textContent = '';
+    return;
+  }
+  if (peso < rango.min || peso > rango.max) {
+    pesoInput.style.borderColor = 'var(--amarillo)';
+    if (avisoEl) avisoEl.textContent = `⚠ Peso inusual para ${cat} (rango habitual: ${rango.min}–${rango.max} kg)`;
+  } else {
+    pesoInput.style.borderColor = '';
+    if (avisoEl) avisoEl.textContent = '';
+  }
+}
+
+let state = { club: '', ninos: [], totalEnviados: 0 };
+let ninoId = 0;
+
+function mostrarError(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('visible');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('visible'), 5000);
+}
+
+function mostrarExito() {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-exito').classList.add('active');
+  document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+  document.getElementById('exito-resumen').textContent =
+    `${state.ninos.length} participante${state.ninos.length !== 1 ? 's' : ''} del ${state.club} inscritos correctamente.`;
+  limpiarBorrador();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function irPaso(n) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel' + n).classList.add('active');
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.classList.remove('active', 'done');
+    if (i + 1 < n) s.classList.add('done');
+    if (i + 1 === n) s.classList.add('active');
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function irPaso2() {
+  const club = document.getElementById('select-club').value;
+  if (!club) { mostrarError('error-paso1', 'Por favor selecciona tu club.'); return; }
+  state.club = club;
+  document.getElementById('info-club-display').innerHTML =
+    `Club: <strong style="color:#fff">${club}</strong> — Añade todos los participantes. Puedes mezclar categorías libremente.`;
+  if (document.getElementById('lista-ninos').children.length === 0) {
+    addNino(); addNino(); addNino();
+  }
+  guardarBorrador();
+  irPaso(2);
+}
+
+function validarFechaNac(str) {
+  if (!str) return true; // opcional
+  const m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (!m) return false;
+  const dia = parseInt(m[1]), mes = parseInt(m[2]), anyo = parseInt(m[3]);
+  if (mes < 1 || mes > 12) return false;
+  if (dia < 1 || dia > 31) return false;
+  if (anyo < 1900) return false;
+  return true;
+}
+
+function irPaso3() {
+  const ninos = recogerNinos();
+  if (ninos.length === 0) { mostrarError('error-paso2', 'Añade al menos un participante.'); return; }
+  for (const n of ninos) {
+    if (!n.nombre || !n.apellidos) { mostrarError('error-paso2', 'Todos los participantes deben tener nombre Y apellidos.'); return; }
+    if (!n.categoria) { mostrarError('error-paso2', `Selecciona la categoría de "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.modalidad) { mostrarError('error-paso2', `Selecciona la modalidad de "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.peso || n.peso <= 0 || n.peso > 150) { mostrarError('error-paso2', `Peso inválido para "${n.nombre} ${n.apellidos}".`); return; }
+    if (!n.sexo) { mostrarError('error-paso2', `Selecciona el sexo de "${n.nombre} ${n.apellidos}".`); return; }
+    if (n.fnac && !validarFechaNac(n.fnac)) { mostrarError('error-paso2', `Fecha de nacimiento inválida para "${n.nombre} ${n.apellidos}". Usa el formato DD/MM/AAAA.`); return; }
+  }
+  state.ninos = ninos;
+
+  const seen = new Set();
+  const duplicados = [];
+  ninos.forEach(n => {
+    const key = (n.nombre + '_' + n.apellidos).toLowerCase();
+    if (seen.has(key)) duplicados.push(`${n.nombre} ${n.apellidos}`);
+    seen.add(key);
+  });
+  const avisoEl = document.getElementById('aviso-duplicados');
+  if (duplicados.length > 0) {
+    document.getElementById('lista-duplicados').textContent = duplicados.join(', ');
+    avisoEl.style.display = '';
+  } else {
+    avisoEl.style.display = 'none';
+  }
+
+  const html = `
+    <div class="resumen-card">
+      <h3>${state.club}</h3>
+      ${ninos.map(n => `
+        <div class="resumen-nino">
+          <span>${[n.nombre, n.apellidos].filter(Boolean).join(' ')}</span>
+          <div class="tags">
+            <span class="tag-badge">${n.categoria}</span>
+            <span class="tag-badge ${n.modalidad === 'Elite' ? 'elite' : ''}">${n.modalidad}</span>
+            <span class="tag-badge">${n.sexo}</span>
+            <span class="peso-badge">${n.peso} kg</span>
+          </div>
+        </div>`).join('')}
+    </div>
+    <p style="font-size:13px;color:var(--texto-apagado);margin-top:8px;">
+      ${ninos.length} participante${ninos.length !== 1 ? 's' : ''} · Revisa los datos antes de enviar.
+    </p>`;
+  document.getElementById('resumen-contenido').innerHTML = html;
+  document.getElementById('estado-envio').innerHTML = '';
+  document.getElementById('btn-enviar').disabled = false;
+  document.getElementById('btn-enviar').style.display = '';
+  document.getElementById('grupos-enviados').style.display = state.totalEnviados > 0 ? '' : 'none';
+  actualizarContador();
+  irPaso(3);
+}
+
+// ─── FILAS ────────────────────────────────────────────────────────────────────
+function addNino(nombre, apellidos, fnac) {
+  nombre = nombre || ''; apellidos = apellidos || ''; fnac = fnac || '';
+  const id = ++ninoId;
+  const div = document.createElement('div');
+  div.className = 'fila-nino';
+  div.id = 'fila-' + id;
+  const opsCats = '<option value="">Categoría</option>' + CONFIG.categorias.map(function(c) {
+    return '<option value="' + c.nombre + '">' + c.nombre + (c.curso ? ' (' + c.curso + ')' : '') + '</option>';
+  }).join('');
+  div.innerHTML =
+    '<input type="text" placeholder="Nombre" class="inp-nombre" autocomplete="off">' +
+    '<input type="text" placeholder="Apellidos" class="inp-apellidos" autocomplete="off">' +
+    '<input type="text" placeholder="DD/MM/AAAA" class="inp-fnac" autocomplete="off" style="font-size:12px;" onblur="validarFnacInput(this)">' +
+    '<div class="select-wrap"><select class="inp-categoria" onchange="onCatChange(this)">' + opsCats + '</select></div>' +
+    '<div class="inp-mod-container"><div class="mod-fija mod-placeholder">—</div></div>' +
+    '<input type="number" placeholder="kg" class="inp-peso" min="5" max="150" step="0.1" autocomplete="off">' +
+    '<div class="select-wrap"><select class="inp-sexo"><option value="">Sexo</option><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option></select></div>' +
+    '<button class="btn-del" onclick="delNino(' + id + ')" title="Eliminar">\u2715</button>';
+  // Setear valores después de crear los elementos
+  div.querySelector('.inp-nombre').value = nombre;
+  div.querySelector('.inp-apellidos').value = apellidos;
+  div.querySelector('.inp-fnac').value = fnac;
+  const aviso = document.createElement('div');
+  aviso.className = 'aviso-peso';
+  aviso.id = 'aviso-' + id;
+  const lista = document.getElementById('lista-ninos');
+  lista.appendChild(div);
+  lista.appendChild(aviso);
+  const normOnBlur = e => { e.target.value = normalizarTexto(e.target.value); };
+  div.querySelector('.inp-nombre').addEventListener('blur', normOnBlur);
+  div.querySelector('.inp-apellidos').addEventListener('blur', normOnBlur);
+  div.querySelector('.inp-peso').addEventListener('input', () => checkPeso(div));
+  if (!nombre) div.querySelector('.inp-nombre').focus();
+}
+
+function onCatChange(sel) {
+  const fila = sel.closest('.fila-nino');
+  const container = fila.querySelector('.inp-mod-container');
+  const cat = sel.value;
+
+  if (!cat) {
+    container.innerHTML = `<div class="mod-fija mod-placeholder">—</div>`;
+  } else if (getSolopromo().includes(cat)) {
+    container.innerHTML = `<div class="mod-fija">Promoción</div>`;
+  } else {
+    container.innerHTML = `
+      <div class="select-wrap">
+        <select class="inp-modalidad">
+          <option value="">Modalidad</option>
+          <option value="Promoción">Promoción</option>
+          <option value="Elite">Elite</option>
+        </select>
+      </div>`;
+  }
+  checkPeso(sel.closest('.fila-nino'));
+}
+
+function delNino(id) {
+  const el = document.getElementById('fila-' + id);
+  const aviso = document.getElementById('aviso-' + id);
+  if (el) el.remove();
+  if (aviso) aviso.remove();
+}
+
+function pegarMasivo() {
+  const nombres = document.getElementById('paste-nombres').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+  const apellidos = document.getElementById('paste-apellidos').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+  const fnacs = document.getElementById('paste-fnac').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
+  const estado = document.getElementById('paste-estado');
+  if (!nombres.length && !apellidos.length) {
+    estado.innerHTML = '<span style="color:#e88">⚠️ Pega al menos los nombres</span>'; return;
+  }
+  const total = Math.max(nombres.length, apellidos.length);
+  const filasExistentes = document.querySelectorAll('.fila-nino');
+  let i = 0;
+  for (; i < filasExistentes.length && i < total; i++) {
+    if (nombres[i]) filasExistentes[i].querySelector('.inp-nombre').value = nombres[i];
+    if (apellidos[i]) filasExistentes[i].querySelector('.inp-apellidos').value = apellidos[i];
+    if (fnacs[i]) filasExistentes[i].querySelector('.inp-fnac').value = fnacs[i];
+  }
+  for (; i < total; i++) addNino(nombres[i] || '', apellidos[i] || '', fnacs[i] || '');
+  document.getElementById('paste-nombres').value = '';
+  document.getElementById('paste-apellidos').value = '';
+  document.getElementById('paste-fnac').value = '';
+  estado.innerHTML = `<span style="color:#4caf50">✅ ${total} participantes añadidos</span>`;
+  guardarBorrador();
+}
+
+function recogerNinos() {
+  return Array.from(document.querySelectorAll('.fila-nino')).map(f => {
+    const nombre = (f.querySelector('.inp-nombre')?.value || '').trim();
+    const apellidos = (f.querySelector('.inp-apellidos')?.value || '').trim();
+    const fnac = (f.querySelector('.inp-fnac')?.value || '').trim();
+    const cat = f.querySelector('.inp-categoria').value;
+    const container = f.querySelector('.inp-mod-container');
+    const modFija = container.querySelector('.mod-fija:not(.mod-placeholder)');
+    const modSelect = container.querySelector('.inp-modalidad');
+    const modalidad = modFija ? 'Promoción' : (modSelect ? modSelect.value : '');
+    return {
+      nombre, apellidos, fnac,
+      categoria: cat,
+      modalidad,
+      peso: parseFloat(f.querySelector('.inp-peso').value) || 0,
+      sexo: f.querySelector('.inp-sexo').value,
+    };
+  }).filter(n => n.nombre || n.apellidos || n.peso);
+}
+
+// ─── ENVÍO ────────────────────────────────────────────────────────────────────
+async function enviarDatos() {
+  document.getElementById('btn-enviar').disabled = true;
+  setEstado('enviando', 'Enviando datos…');
+  const fecha = new Date().toLocaleDateString('es-ES');
+  try {
+    await Promise.all(state.ninos.map(n => {
+      const params = new URLSearchParams({
+        nombre: n.nombre, apellidos: n.apellidos, fnac: n.fnac, club: state.club, cat: n.categoria,
+        mod: n.modalidad, sexo: n.sexo, peso: n.peso, fecha,
+      });
+      return fetch(APPS_SCRIPT_URL + '?' + params.toString(), { method: 'GET', mode: 'no-cors' });
+    }));
+    setEstado('ok', `✓ ${state.ninos.length} participantes enviados correctamente`);
+    state.totalEnviados += state.ninos.length;
+    actualizarContador();
+    setTimeout(mostrarExito, 900);
+  } catch (err) {
+    console.error(err);
+    setEstado('error', '✗ Error al enviar. Comprueba la conexión e inténtalo de nuevo.');
+    document.getElementById('btn-enviar').disabled = false;
+  }
+}
+
+function setEstado(tipo, msg) {
+  const clases = { enviando: 'estado-enviando', ok: 'estado-ok', error: 'estado-error' };
+  const iconos  = { enviando: '<span class="spinner"></span>', ok: '●', error: '●' };
+  document.getElementById('estado-envio').innerHTML =
+    `<span class="estado-badge ${clases[tipo]}">${iconos[tipo]} ${msg}</span>`;
+}
+
+function nuevoEnvio() {
+  document.getElementById('lista-ninos').innerHTML = '';
+  ninoId = 0; state.ninos = [];
+  document.getElementById('btn-enviar').style.display = '';
+  document.getElementById('estado-envio').innerHTML = '';
+  addNino(); addNino(); addNino();
+  irPaso(2);
+}
+
+function actualizarContador() {
+  const t = state.totalEnviados;
+  document.getElementById('lista-grupos-enviados').innerHTML =
+    `<span class="grupo-badge">✓ ${t} participante${t !== 1 ? 's' : ''} inscritos en esta sesión</span>`;
+}
+
+// ─── AUTOGUARDADO ─────────────────────────────────────────────────────────────
+const BORRADOR_KEY = 'judobase_borrador';
+
+function guardarBorrador() {
+  const ninos = recogerNinos();
+  if (!state.club && ninos.length === 0) return;
+  localStorage.setItem(BORRADOR_KEY, JSON.stringify({ club: state.club, ninos, ts: Date.now() }));
+}
+
+function limpiarBorrador() {
+  localStorage.removeItem(BORRADOR_KEY);
+}
+
+function restaurarBorrador() {
+  try {
+    const raw = localStorage.getItem(BORRADOR_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data.club || !data.ninos?.length) return;
+    const banner = document.getElementById('banner-restaurar');
+    document.getElementById('banner-club').textContent = data.club;
+    banner.style.display = 'flex';
+    document.getElementById('btn-restaurar-si').onclick = () => {
+      banner.style.display = 'none';
+      document.getElementById('select-club').value = data.club;
+      state.club = data.club;
+      document.getElementById('info-club-display').innerHTML =
+        `Club: <strong style="color:#fff">${data.club}</strong> — Datos restaurados automáticamente.`;
+      document.getElementById('lista-ninos').innerHTML = '';
+      ninoId = 0;
+      data.ninos.forEach(n => {
+        addNino(n.nombre, n.apellidos);
+        const filas = document.querySelectorAll('#lista-ninos .fila-nino');
+        const fila = filas[filas.length - 1];
+        const catSel = fila.querySelector('.inp-categoria');
+        catSel.value = n.categoria;
+        onCatChange(catSel);
+        const modSelect = fila.querySelector('.inp-modalidad');
+        if (modSelect) modSelect.value = n.modalidad;
+        fila.querySelector('.inp-peso').value = n.peso;
+        fila.querySelector('.inp-sexo').value = n.sexo;
+        checkPeso(fila);
+      });
+      irPaso(2);
+    };
+    document.getElementById('btn-restaurar-no').onclick = () => {
+      banner.style.display = 'none';
+      limpiarBorrador();
+    };
+  } catch (e) {
+    localStorage.removeItem(BORRADOR_KEY);
+  }
+}
+
+
+// ══════════════════════════════ PANEL ADMIN ══════════════════════════════
+
+function abrirLogin() {
+  document.getElementById('modal-login').classList.add('active');
+  document.getElementById('login-user').focus();
+  document.getElementById('login-msg').style.display = 'none';
+}
+function cerrarLogin() {
+  document.getElementById('modal-login').classList.remove('active');
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+async function validarLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if (!user || !pass) return;
+  document.getElementById('login-loading').style.display = '';
+  document.getElementById('login-msg').style.display = 'none';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=login&user=' + encodeURIComponent(user) + '&pass=' + encodeURIComponent(pass);
+    const resp = await fetch(url);
+    const data = await resp.json();
+    document.getElementById('login-loading').style.display = 'none';
+    if (data.ok) {
+      cerrarLogin();
+      abrirAdmin();
+    } else {
+      document.getElementById('login-msg').style.display = '';
+    }
+  } catch(e) {
+    document.getElementById('login-loading').style.display = 'none';
+    document.getElementById('login-msg').textContent = 'Error de conexión';
+    document.getElementById('login-msg').style.display = '';
+  }
+}
+
+function cerrarAdmin() {
+  document.getElementById('modal-admin').classList.remove('active');
+}
+
+function showAdminTab(name, btn) {
+  document.querySelectorAll('.tab-admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-admin').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function abrirAdmin() {
+  // Poblar campos con CONFIG actual
+  document.getElementById('adm-titulo').value = CONFIG.titulo;
+  document.getElementById('adm-fecha').value = CONFIG.fecha;
+  document.getElementById('adm-lugar').value = CONFIG.lugar;
+  renderClubsAdmin();
+  renderCatsAdmin();
+  renderPesosAdmin();
+  document.getElementById('adm-msg').style.display = 'none';
+  document.getElementById('modal-admin').classList.add('active');
+}
+
+function renderClubsAdmin() {
+  const seleccionados = new Set(CONFIG.clubsSeleccionados.length ? CONFIG.clubsSeleccionados : CONFIG.clubsMaestro);
+  const filtro = (document.getElementById('adm-club-search')?.value || '').toLowerCase();
+  const lista = CONFIG.clubsMaestro.filter(c => !filtro || c.toLowerCase().includes(filtro));
+  document.getElementById('adm-clubs-list').innerHTML = lista.map(club => {
+    const checked = seleccionados.has(club) ? 'checked' : '';
+    return '<label class="club-item"><input type="checkbox" value="' + club + '" ' + checked + ' onchange="actualizarSeleccionClubs()"> ' + club + '</label>';
+  }).join('');
+}
+
+function filtrarClubsAdmin() { renderClubsAdmin(); }
+
+function actualizarSeleccionClubs() {
+  CONFIG.clubsSeleccionados = Array.from(document.querySelectorAll('#adm-clubs-list input:checked')).map(c => c.value);
+}
+
+function seleccionarTodosClubs(sel) {
+  document.querySelectorAll('#adm-clubs-list input[type=checkbox]').forEach(c => c.checked = sel);
+  actualizarSeleccionClubs();
+}
+
+function renderCatsAdmin() {
+  const CATALOGO = ['Biberón','Prebenjamín','Benjamín B','Benjamín A','Alevín','Infantil','Cadete','Junior','Senior'];
+  const container = document.getElementById('adm-cats-list');
+  container.innerHTML = CONFIG.categorias.map((cat, i) => {
+    return '<div class="cat-admin-row">' +
+      '<span style="font-weight:600;">' + cat.nombre + ' <small style="color:#666;">' + (cat.curso||'') + '</small></span>' +
+      '<input type="text" value="' + (cat.anos||'') + '" placeholder="2017,2018" oninput="CONFIG.categorias[' + i + '].anos=this.value">' +
+      '<select onchange="CONFIG.categorias[' + i + '].modalidad=this.value" style="font-size:12px;padding:6px 8px;">' +
+        '<option value="solo-promo" ' + (cat.modalidad==='solo-promo'?'selected':'') + '>Solo Promoción</option>' +
+        '<option value="ambas" ' + (cat.modalidad==='ambas'?'selected':'') + '>Elite + Promo</option>' +
+        '<option value="solo-elite" ' + (cat.modalidad==='solo-elite'?'selected':'') + '>Solo Elite</option>' +
+      '</select>' +
+      '<button class="btn-admin-outline" style="padding:4px 10px;color:#e74c3c;" onclick="CONFIG.categorias.splice(' + i + ',1);renderCatsAdmin()">✕</button>' +
+    '</div>';
+  }).join('');
+
+  // Botón añadir categoría
+  container.innerHTML += '<div style="margin-top:10px;">' +
+    '<select id="adm-cat-nueva" style="font-size:12px;padding:8px;width:auto;">' +
+    '<option value="">+ Añadir categoría…</option>' +
+    CATALOGO.filter(c => !CONFIG.categorias.some(e => e.nombre === c)).map(c => '<option>' + c + '</option>').join('') +
+    '</select>' +
+    ' <button class="btn-admin-outline" onclick="addCatAdmin()">Añadir</button></div>';
+}
+
+function addCatAdmin() {
+  const sel = document.getElementById('adm-cat-nueva').value;
+  if (!sel) return;
+  const cursos = {'Biberón':'4º Infantil','Prebenjamín':'5º-6º Infantil','Benjamín B':'1º-2º Primaria','Benjamín A':'3º-4º Primaria','Alevín':'5º-6º Primaria','Infantil':'1º-2º ESO','Cadete':'3º-4º ESO','Junior':'Bachillerato','Senior':'18+'};
+  CONFIG.categorias.push({ nombre: sel, curso: cursos[sel]||'', anos: '', modalidad: 'solo-promo' });
+  renderCatsAdmin();
+}
+
+function setPesoMin(cat, val) { if (!CONFIG.pesoRangos[cat]) CONFIG.pesoRangos[cat] = {}; CONFIG.pesoRangos[cat].min = parseFloat(val); }
+function setPesoMax(cat, val) { if (!CONFIG.pesoRangos[cat]) CONFIG.pesoRangos[cat] = {}; CONFIG.pesoRangos[cat].max = parseFloat(val); }
+
+function renderPesosAdmin() {
+  document.getElementById('adm-pesos-list').innerHTML = CONFIG.categorias.map(function(cat) {
+    const r = CONFIG.pesoRangos[cat.nombre] || { min: 0, max: 100 };
+    const n = cat.nombre.replace(/'/g, "\\'");
+    return '<div class="peso-rango-row">' +
+      '<span>' + cat.nombre + '</span>' +
+      '<input type="number" value="' + r.min + '" min="0" max="200" step="0.5" oninput="setPesoMin(\'' + n + '\',this.value)">' +
+      '<input type="number" value="' + r.max + '" min="0" max="200" step="0.5" oninput="setPesoMax(\'' + n + '\',this.value)">' +
+    '</div>';
+  }).join('');
+}
+
+async function guardarConfigAdmin() {
+  const msgEl = document.getElementById('adm-msg');
+  msgEl.style.display = 'none';
+
+  // Recoger todos los valores
+  CONFIG.titulo = document.getElementById('adm-titulo').value.trim() || CONFIG.titulo;
+  CONFIG.fecha = document.getElementById('adm-fecha').value.trim();
+  CONFIG.lugar = document.getElementById('adm-lugar').value.trim();
+  actualizarSeleccionClubs();
+
+  // Cambio de credenciales si se rellenó
+  const nuevoUser = document.getElementById('adm-nuevo-user').value.trim();
+  const nuevoPass = document.getElementById('adm-nuevo-pass').value;
+  const nuevoPass2 = document.getElementById('adm-nuevo-pass2').value;
+  if (nuevoUser || nuevoPass) {
+    if (!nuevoUser || !nuevoPass) { mostrarMsgAdmin('err', 'Rellena usuario Y contraseña para cambiarlos'); return; }
+    if (nuevoPass !== nuevoPass2) { mostrarMsgAdmin('err', 'Las contraseñas no coinciden'); return; }
+  }
+
+  try {
+    const body = {
+      action: 'guardarConfig',
+      config: JSON.stringify(CONFIG),
+      nuevoUser: nuevoUser || '',
+      nuevoPass: nuevoPass || '',
+    };
+    const resp = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      aplicarConfigUI();
+      mostrarMsgAdmin('ok', '✅ Configuración guardada correctamente');
+      document.getElementById('adm-nuevo-user').value = '';
+      document.getElementById('adm-nuevo-pass').value = '';
+      document.getElementById('adm-nuevo-pass2').value = '';
+    } else {
+      mostrarMsgAdmin('err', '❌ Error: ' + (data.error || 'desconocido'));
+    }
+  } catch(e) {
+    mostrarMsgAdmin('err', '❌ Error de conexión');
+  }
+}
+
+function mostrarMsgAdmin(tipo, msg) {
+  const el = document.getElementById('adm-msg');
+  el.className = 'admin-msg ' + tipo;
+  el.textContent = msg;
+  el.style.display = '';
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  cargarConfigSheets();
+  restaurarBorrador();
+  const lista = document.getElementById('lista-ninos');
+  lista.addEventListener('input', guardarBorrador);
+  lista.addEventListener('change', guardarBorrador);
+});
+</script>
+</body>
+</html>
