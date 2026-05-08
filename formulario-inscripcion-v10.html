@@ -312,6 +312,8 @@
 </header>
 
 
+</div> <!-- /main-container -->
+
 <!-- Modal Login -->
 <div class="modal-overlay" id="modal-login">
   <div class="modal" style="max-width:360px;">
@@ -433,6 +435,11 @@
   </div>
 </div>
 
+<div id="config-spinner" style="text-align:center;padding:60px;font-size:14px;color:#666;">
+  <div style="display:inline-block;width:32px;height:32px;border:3px solid #333;border-top-color:#c0392b;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px;"></div>
+  <div>Cargando configuración…</div>
+</div>
+<div id="main-container" style="display:none;">
 <div class="container">
 
   <div id="banner-restaurar" class="banner-restaurar" style="display:none;">
@@ -662,18 +669,21 @@ async function cargarConfigSheets() {
 }
 
 function aplicarConfigUI() {
-  // Título y subtítulo
   document.querySelector('header h1').textContent = CONFIG.titulo;
   document.title = 'Inscripción — ' + CONFIG.titulo;
-  if (CONFIG.fecha || CONFIG.lugar) {
-    document.querySelector('header p').textContent =
-      [CONFIG.fecha, CONFIG.lugar].filter(Boolean).join(' · ');
-  }
+  // Fecha: mostrar solo si es texto legible (no formato ISO)
+  const fechaLimpia = typeof CONFIG.fecha === 'string' && !CONFIG.fecha.includes('T') ? CONFIG.fecha : '';
+  const subtitulo = [fechaLimpia, CONFIG.lugar].filter(Boolean).join(' · ');
+  document.querySelector('header p').textContent = subtitulo || 'Formulario de inscripción de participantes';
   // Clubs en el select
   const clubs = CONFIG.clubsSeleccionados.length ? CONFIG.clubsSeleccionados : CONFIG.clubsMaestro;
   const sel = document.getElementById('select-club');
   sel.innerHTML = '<option value="">— Selecciona tu club —</option>' +
-    clubs.sort().map(c => '<option>' + c + '</option>').join('');
+    clubs.sort().map(function(c) { return '<option>' + c + '</option>'; }).join('');
+  // Ocultar spinner si existe
+  const spinner = document.getElementById('config-spinner');
+  if (spinner) spinner.style.display = 'none';
+  document.getElementById('main-container').style.display = '';
 }
 
 function validarFnacInput(input) {
@@ -1167,7 +1177,11 @@ async function guardarConfigAdmin() {
   CONFIG.titulo = document.getElementById('adm-titulo').value.trim() || CONFIG.titulo;
   CONFIG.fecha = document.getElementById('adm-fecha').value.trim();
   CONFIG.lugar = document.getElementById('adm-lugar').value.trim();
-  actualizarSeleccionClubs();
+  // Forzar recogida de clubs seleccionados del DOM
+  const checks = document.querySelectorAll('#adm-clubs-list input[type=checkbox]');
+  if (checks.length > 0) {
+    CONFIG.clubsSeleccionados = Array.from(checks).filter(c => c.checked).map(c => c.value);
+  }
 
   // Cambio de credenciales si se rellenó
   const nuevoUser = document.getElementById('adm-nuevo-user').value.trim();
@@ -1191,11 +1205,15 @@ async function guardarConfigAdmin() {
     });
     const data = await resp.json();
     if (data.ok) {
-      aplicarConfigUI();
       mostrarMsgAdmin('ok', '✅ Configuración guardada correctamente');
       document.getElementById('adm-nuevo-user').value = '';
       document.getElementById('adm-nuevo-pass').value = '';
       document.getElementById('adm-nuevo-pass2').value = '';
+      // Recargar config desde Sheets para que se apliquen los cambios
+      setTimeout(function() {
+        cerrarAdmin();
+        cargarConfigSheets();
+      }, 1200);
     } else {
       mostrarMsgAdmin('err', '❌ Error: ' + (data.error || 'desconocido'));
     }
