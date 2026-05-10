@@ -28,11 +28,11 @@
     background: var(--gris-oscuro); border-bottom: 3px solid var(--rojo);
     padding: 18px 32px; display: flex; align-items: center; gap: 20px;
   }
-  .logo-circle {
-    width: 52px; height: 52px; background: var(--rojo); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #fff; letter-spacing: 1px; flex-shrink: 0;
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; flex-shrink: 0;
   }
+  .logo-text span:first-child { color: #fff; }
+  .logo-text span:last-child { color: var(--rojo); }
   header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #fff; line-height: 1.1; }
   header p { font-size: 13px; color: var(--texto-apagado); margin-top: 2px; }
 
@@ -303,7 +303,7 @@
 <body>
 
 <header>
-  <div class="logo-circle">JUDO</div>
+  <div class="logo-text"><span>JUDO</span><span>BASE</span></div>
   <div style="flex:1;">
     <h1>CAMPEONATO A ESTRADA</h1>
     <p>Formulario de inscripción de participantes</p>
