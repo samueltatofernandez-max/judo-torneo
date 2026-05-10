@@ -675,7 +675,7 @@ function aplicarConfigUI() {
   if (h1) h1.textContent = CONFIG.titulo;
   document.title = 'Inscripción — ' + CONFIG.titulo;
   // Fecha: ignorar formato ISO
-  const fechaLimpia = typeof CONFIG.fecha === 'string' && !CONFIG.fecha.includes('T') ? CONFIG.fecha : '';
+  const fechaLimpia = CONFIG.fecha && typeof CONFIG.fecha === 'string' ? CONFIG.fecha.replace(/T\d{2}:\d{2}:\d{2}.*Z?/, '').trim() : '';
   const subtitulo = [fechaLimpia, CONFIG.lugar].filter(Boolean).join(' · ');
   if (p) p.textContent = subtitulo || 'Formulario de inscripción de participantes';
   // Clubs en el select
