@@ -1,0 +1,3329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JudoBase — Sistema QR</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap');
+  :root {
+    --gold: #D72B2B; --gold-light: #F04444; --black: #0D0D0D; --dark: #151515;
+    --panel: #1C1C1C; --border: #2A2A2A; --text: #E8E8E8; --muted: #888;
+    --green: #22C55E; --red: #EF4444; --blue: #3B82F6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--black); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--dark); border-bottom: 3px solid var(--gold);
+    padding: 0 2rem; display: flex; align-items: center; justify-content: space-between;
+    height: 64px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 0.05em; color: var(--gold); }
+  .logo span { color: var(--text); }
+  nav { display: flex; gap: 0.25rem; }
+  .tab-btn {
+    background: none; border: none; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+    padding: 0.5rem 1.2rem; cursor: pointer; border-radius: 6px;
+    transition: all 0.2s; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--border); }
+  .tab-btn.active { background: var(--gold); color: #fff; }
+
+  .panel { display: none; padding: 2rem; max-width: 1400px; margin: 0 auto; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem;
+    letter-spacing: 0.1em; color: var(--text); margin-bottom: 1rem;
+  }
+  .card-subtitle { font-size: 0.82rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.6rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s; letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: var(--gold-light); }
+  .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-outline:hover { color: var(--text); border-color: var(--muted); }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+  input[type="text"], input[type="number"], input[type="time"], select {
+    background: var(--dark); border: 1px solid var(--border); border-radius: 8px;
+    padding: 0.55rem 0.9rem; color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    appearance: none; -webkit-appearance: none; width: 100%;
+  }
+  input:focus, select:focus { border-color: var(--gold); }
+  select option { background: var(--dark); }
+  label { display: block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+
+  /* CONFIG */
+  .turno-config-card {
+    background: var(--dark); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem; margin-bottom: 0.75rem;
+  }
+  .turno-config-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .turno-config-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.08em; color: var(--gold); }
+  .turno-config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+
+  .cat-config-row {
+    display: grid; grid-template-columns: 1.3fr 1fr 1.2fr 1fr auto;
+    gap: 0.6rem; align-items: center; padding: 0.6rem; margin-bottom: 0.5rem;
+    background: var(--dark); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .cat-config-row span { font-size: 0.75rem; }
+
+  .reserva-row {
+    display: grid; grid-template-columns: 1.5fr 1fr auto;
+    gap: 0.6rem; align-items: center; margin-bottom: 0.5rem;
+  }
+
+  /* LISTADO */
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 12px;
+    padding: 2rem; text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative; margin-bottom: 1rem;
+  }
+  .upload-zone:hover { border-color: var(--gold); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 1; }
+  .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .format-hint { background: rgba(215,43,43,0.08); border-left: 3px solid var(--gold); border-radius: 4px; padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--muted); margin-top: 1rem; line-height: 1.6; }
+  .format-hint code { background: var(--border); padding: 1px 5px; border-radius: 3px; color: var(--text); font-size: 0.78rem; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+  .stat-num { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--gold); }
+  .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .export-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+  .club-export-btn { background: var(--dark); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.8rem; padding: 0.4rem 0.8rem; cursor: pointer; transition: all 0.15s; }
+  .club-export-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .controls-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .search-box { flex: 1; min-width: 160px; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  thead tr { background: var(--dark); }
+  th { padding: 0.6rem 0.8rem; text-align: left; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tbody tr:hover { background: var(--dark); }
+  .section-divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  /* SCANNER */
+  .scan-layout { display: grid; grid-template-columns: 1fr 360px; gap: 1.5rem; }
+  .scan-input-wrap { position: relative; }
+  .scan-input {
+    width: 100%; background: var(--dark); border: 2px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.25rem; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 1.1rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .scan-input:focus { border-color: var(--gold); }
+  .scan-hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.4rem; }
+  .result-card {
+    background: var(--dark); border: 2px solid var(--border);
+    border-radius: 12px; padding: 2rem; text-align: center;
+    min-height: 160px; display: flex; align-items: center; justify-content: center;
+    margin-top: 1rem; transition: all 0.3s;
+  }
+  .result-card.ok { border-color: var(--green); background: rgba(34,197,94,0.05); }
+  .result-card.warn { border-color: #F59E0B; background: rgba(245,158,11,0.05); }
+  .result-card.error { border-color: var(--red); background: rgba(239,68,68,0.05); }
+  .result-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+  .result-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.05em; }
+  .result-club { font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem; }
+  .result-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+  .result-warn-text { color: #F59E0B; font-weight: 600; font-size: 0.9rem; margin-top: 0.25rem; }
+  .result-error-text { color: var(--red); font-weight: 600; font-size: 0.9rem; }
+  .log-list { list-style: none; max-height: 300px; overflow-y: auto; }
+  .log-item { display: grid; grid-template-columns: 24px 55px 1fr auto auto; gap: 0.4rem; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.8rem; }
+  .log-time { color: var(--muted); font-size: 0.72rem; }
+  .progress-bar { background: var(--border); border-radius: 999px; height: 6px; overflow: hidden; }
+  .progress-fill { background: var(--gold); height: 100%; transition: width 0.3s; border-radius: 999px; }
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .filter-tag { background: var(--dark); border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; cursor: pointer; transition: all 0.15s; }
+  .filter-tag.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+  /* TATAMIS */
+  .tatami-config-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .tatami-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+  .tatami-card { background: var(--dark); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tatami-card-header { background: var(--panel); padding: 0.6rem 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+  .tatami-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.08em; }
+  .tatami-card-meta { font-size: 0.72rem; color: var(--muted); }
+  .tatami-card-body { padding: 0.5rem 0; max-height: 260px; overflow-y: auto; }
+  .tatami-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 1rem; font-size: 0.82rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .tatami-row:last-child { border-bottom: none; }
+  .tatami-row-peso { font-size: 0.75rem; color: var(--gold); font-weight: 600; }
+  .turno-block { margin-bottom: 2rem; }
+  .turno-block-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.1em; color: var(--gold); margin-bottom: 1rem; }
+
+  /* MANUAL */
+  .manual-grid-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .manual-grid-2 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem; }
+
+  /* HORAS */
+  .horas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+  .hora-card { background: var(--dark); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+  .hora-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: 0.08em; color: var(--gold); margin-bottom: 0.75rem; }
+
+  /* WARN BOX */
+  .warn-box { background: rgba(239,68,68,0.1); border: 1px solid var(--red); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #fca5a5; margin-bottom: 1rem; }
+  .ok-box { background: rgba(34,197,94,0.1); border: 1px solid var(--green); border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #86efac; }
+  .incongruencias-box { background: rgba(245,158,11,0.08); border: 1px solid #F59E0B; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.85rem; color: #fcd34d; margin-bottom: 1rem; }
+  .incongruencia-badge { display:inline-block; background:rgba(245,158,11,0.15); border:1px solid #F59E0B; border-radius:4px; color:#fbbf24; font-size:0.72rem; font-weight:700; padding:1px 6px; margin-left:4px; vertical-align:middle; cursor:default; }
+
+  .stat-bar-row { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem; font-size:0.85rem; }
+  .stat-bar-label { width:140px; flex-shrink:0; color:var(--text); font-weight:500; }
+  .stat-bar-track { flex:1; background:var(--border); border-radius:999px; height:10px; overflow:hidden; }
+  .stat-bar-fill { height:100%; border-radius:999px; transition:width 0.4s ease; }
+  .stat-bar-nums { width:90px; flex-shrink:0; text-align:right; font-size:0.78rem; color:var(--muted); }
+  .stat-bar-pct { width:40px; flex-shrink:0; text-align:right; font-weight:700; font-size:0.82rem; }
+  .toast { display:none; position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:var(--dark); border:1px solid var(--border); color:var(--text); padding:0.6rem 1.2rem; border-radius:8px; font-size:0.85rem; z-index:9999; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+  .toast.show { display: block; }
+
+  @media (max-width: 768px) {
+    .scan-layout { grid-template-columns: 1fr; }
+    .cat-config-row { grid-template-columns: 1fr 1fr; }
+    .manual-grid-2 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Judo<span>Base</span></div>
+  <nav>
+    <button class="tab-btn active" onclick="showTab('config', this)">⚙️ Config</button>
+    <button class="tab-btn" onclick="showTab('listado', this)">📋 Listado</button>
+    <button class="tab-btn" onclick="showTab('tatamis', this)">🥋 Tatamis</button>
+    <button class="tab-btn" onclick="showTab('scanner', this)">📷 Escaneo</button>
+    <button class="tab-btn" onclick="showTab('report', this)">📊 Informe</button>
+    <div style="display:flex;gap:0.4rem;margin-left:0.75rem;border-left:1px solid var(--border);padding-left:0.75rem;">
+      <button class="btn btn-outline btn-sm" onclick="exportarSesionCompleta()" title="Exportar sesión completa para importar en otro ordenador" style="font-size:0.72rem;padding:0.3rem 0.6rem;">💾 Exportar sesión</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-sesion-input').click()" title="Importar sesión completa desde otro ordenador" style="font-size:0.72rem;padding:0.3rem 0.6rem;">📂 Importar sesión</button>
+      <input type="file" id="import-sesion-input" accept=".json" style="display:none;" onchange="importarSesionCompleta(this)">
+    </div>
+  </nav>
+</header>
+
+<!-- ══════════════════════════════ CONFIG ══════════════════════════════ -->
+<div id="banner-restaurar" style="display:none; background:rgba(240,192,64,0.08); border:1px solid rgba(240,192,64,0.35); border-radius:8px; padding:14px 20px; margin:1rem 2rem 0; font-size:0.85rem; color:#ccc; align-items:center; gap:12px; flex-wrap:wrap;">
+  💾 Tienes una sesión guardada del <strong id="banner-fecha" style="color:#fff;"></strong> con <strong id="banner-info" style="color:#fff;"></strong>. ¿Quieres restaurarla?
+  <button class="btn btn-gold btn-sm" onclick="restaurarSesion()">Restaurar</button>
+  <button class="btn btn-outline btn-sm" onclick="descartarSesion()">Descartar</button>
+</div>
+
+<div id="tab-config" class="panel active">
+
+  <!-- TURNOS -->
+  <div class="card">
+    <div class="card-title">🕐 Turnos del Campeonato</div>
+    <div class="card-subtitle">Define cuántos turnos tiene el campeonato este año, su nombre y sus horas. Mínimo 1, máximo 5.</div>
+    <div id="turnos-container"></div>
+    <button class="btn btn-outline btn-sm" onclick="addTurno()">＋ Añadir turno</button>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <div class="card">
+    <div class="card-title">🏆 Categorías</div>
+    <div class="card-subtitle">Selecciona qué categorías participan este año, a qué turno van y qué modalidades admiten.</div>
+    <div style="display:grid; grid-template-columns:1.3fr 1fr 1.2fr 1fr auto; gap:0.6rem; padding:0 0.6rem; margin-bottom:0.5rem;">
+      <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Categoría</span>
+      <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Turno</span>
+      <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;">Modalidad</span>
+      <span style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;" title="Años de nacimiento válidos, separados por comas. Ej: 2017,2018">Años válidos ⓘ</span>
+      <span></span>
+    </div>
+    <div id="cats-container"></div>
+    <div style="display:flex;gap:0.75rem;align-items:center;margin-top:0.75rem;">
+      <select id="select-add-cat" style="flex:1;max-width:320px;" onchange="addCategoriaFromSelect()">
+        <option value="">-- Añadir categoría --</option>
+      </select>
+      <span id="btn-add-cat" style="font-size:0.8rem;color:var(--muted);">↑ Selecciona del desplegable</span>
+    </div>
+  </div>
+
+  <!-- RESERVAS DE TATAMIS -->
+  <div class="card">
+    <div class="card-title">📌 Reservas de Tatamis</div>
+    <div class="card-subtitle">Asigna tatamis fijos a categorías concretas (ej: Biberón siempre al Tatami 1). El resto se distribuye automáticamente.</div>
+    <div id="reservas-container"></div>
+    <button class="btn btn-outline btn-sm" onclick="addReserva()" style="margin-top:0.5rem;">＋ Añadir reserva</button>
+  </div>
+
+  <!-- PESOS ELITE -->
+  <div class="card" id="card-pesos-elite" style="display:none;">
+    <div class="card-title">⚖️ Categorías de Peso — Elite</div>
+    <div class="card-subtitle">
+      Define los pesos de competición para las categorías Elite. Escríbelos separados por comas con el signo - o +.<br>
+      Ejemplo: <code style="background:var(--border);padding:2px 6px;border-radius:4px;font-size:0.8rem;">-26, -30, -34, -38, -42, -46, +46</code>
+    </div>
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; background:var(--dark); border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem;">
+      <label style="margin:0; white-space:nowrap;">Margen de peso (kg):</label>
+      <input type="number" id="input-margen-peso" value="${config.margenPeso ?? 1.5}" min="0" max="5" step="0.1"
+        style="width:80px; text-align:center; font-weight:600;"
+        oninput="config.margenPeso=parseFloat(this.value)||0">
+      <span style="font-size:0.82rem; color:var(--muted);">Un niño de 27.2 kg con margen de 1.5 entra en -26 kg (no en -30 kg)</span>
+    </div>
+    <div id="pesos-elite-container"></div>
+  </div>
+
+  <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+    <button class="btn btn-gold" onclick="guardarConfig()">✅ Guardar configuración</button>
+    <span id="config-estado" style="font-size:0.85rem;"></span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ LISTADO ══════════════════════════════ -->
+<div id="tab-listado" class="panel">
+
+  <!-- CARGA -->
+  <div class="card">
+    <div class="card-title">📂 Cargar Participantes</div>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".csv,.xlsx,.xls" onchange="handleFile(this)">
+      <div class="upload-icon">📂</div>
+      <p style="color:var(--muted);font-size:0.9rem;">Arrastra tu CSV/Excel o haz clic para seleccionar</p>
+      <p style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem;">Se acumulan — puedes cargar varios archivos</p>
+    </div>
+    <div class="format-hint">
+      <strong>Columnas esperadas:</strong> <code>nombre</code> · <code>apellidos</code> · <code>fnac</code> · <code>club</code> · <code>categoria</code> · <code>modalidad</code> · <code>sexo</code> · <code>peso</code><br>
+      💡 Códigos QR en formato <code>JUDOBASE0001, JUDOBASE0002…</code>
+    </div>
+    <div id="btn-quitar-wrap" style="display:none;margin-top:1rem;position:relative;z-index:10;">
+      <button class="btn btn-danger btn-sm" onclick="quitarListado()">🗑️ Quitar listado y empezar de nuevo</button>
+    </div>
+  </div>
+
+  <!-- EXPORTAR QR -->
+  <div class="card" id="card-export-qr">
+    <div class="card-title">📤 Exportar Hojas QR por Club</div>
+    <div id="horas-warning" style="display:none;" class="warn-box">⚠️ Configura y guarda las horas de los turnos en <strong>⚙️ Config</strong> antes de exportar los QRs.</div>
+    <div id="tatamis-warning" class="incongruencias-box" style="display:none;">⚠️ Antes de generar los QRs hay que distribuir a los participantes en los tatamis. Ve a la pestaña <strong>🥋 Tatamis</strong> y pulsa <strong>⚡ Calcular distribución</strong>.</div>
+    <div class="export-grid" id="export-grid"></div>
+    <hr class="section-divider">
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-gold btn-export-club" onclick="exportarZipTodosClubs()" id="btn-export-zip">📦 Exportar ZIP — un PDF por club</button>
+      <button class="btn btn-outline btn-export-club" onclick="exportAllClubs()">📄 Exportar todos en un PDF</button>
+    </div>
+    <div id="zip-progreso" style="display:none;margin-top:0.75rem;font-size:0.82rem;color:var(--muted);"></div>
+  </div>
+
+  <!-- STATS + TABLA -->
+  <div id="admin-content" style="display:none;">
+    <div id="duplicados-aviso" style="display:none;" class="incongruencias-box"></div>
+    <div id="incongruencias-aviso" style="display:none;" class="incongruencias-box"></div>
+    <div class="stats-row" id="stats-row"></div>
+
+    <!-- EXPORTACIÓN IJF — encima de la tabla -->
+    <div class="card" id="card-ijf" style="display:none;">
+      <div class="card-title">🏅 Exportar formato IJF (Elite)</div>
+      <div class="card-subtitle">
+        Genera el archivo TXT en el formato exacto que necesita la app IJF para importar los participantes Elite directamente.
+        Los participantes se asignan automáticamente a su categoría de peso con un margen de <strong id="ijf-margen-label">1.5</strong> kg.
+      </div>
+      <div id="ijf-aviso-pesos" class="warn-box" style="display:none;"></div>
+      <div id="ijf-preview" style="margin-bottom:1rem;"></div>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button class="btn btn-gold" onclick="exportarIJF('Masculino')">⬇️ Exportar Masculino</button>
+        <button class="btn btn-gold" onclick="exportarIJF('Femenino')">⬇️ Exportar Femenino</button>
+        <button class="btn btn-outline" onclick="exportarIJF('ambos')">⬇️ Exportar todos (un archivo)</button>
+      </div>
+    </div>
+
+    <!-- LISTA DE PARTICIPANTES -->
+    <div class="card">
+      <div class="card-title">🗂️ Lista de Participantes</div>
+      <div class="controls-row">
+        <input class="search-box" type="text" placeholder="🔍 Buscar nombre o club..." oninput="filterTable()" id="search-input" style="flex:2;">
+        <select style="flex:1;" onchange="filterTable()" id="filter-cat"><option value="">Todas las categorías</option></select>
+        <select style="flex:1;" onchange="filterTable()" id="filter-turno"><option value="">Todos los turnos</option></select>
+        <span style="color:var(--muted);font-size:0.82rem;" id="filter-count"></span>
+      </div>
+      <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+        <input type="text" id="input-eliminar" placeholder="Código a eliminar: JUDOBASE0001" style="flex:1; max-width:280px; font-family:monospace; font-size:0.85rem;" autocomplete="off" spellcheck="false" onkeydown="if(event.key==='Enter') eliminarPorCodigo()">
+        <button class="btn btn-danger btn-sm" onclick="eliminarPorCodigo()">🗑️ Eliminar por código</button>
+        <span id="eliminar-estado" style="font-size:0.82rem; color:var(--muted);"></span>
+      </div>
+
+      <!-- AÑADIR MANUAL — encima de la tabla -->
+      <div style="border:1px solid var(--border); border-radius:8px; padding:0.75rem 1rem; margin-bottom:1rem; background:var(--dark);">
+        <div style="font-size:0.78rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.6rem;">＋ Añadir participante manualmente</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+          <div><label>Nombre</label><input type="text" id="manual-nombre" placeholder="Nombre"></div>
+          <div><label>Apellidos</label><input type="text" id="manual-apellidos" placeholder="Apellidos"></div>
+          <div><label>Club</label><input type="text" id="manual-club" placeholder="Club"></div>
+          <div><label>F. Nacimiento</label><input type="text" id="manual-fnac" placeholder="DD/MM/AAAA"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.6rem;">
+          <div><label>Categoría</label>
+            <select id="manual-categoria" onchange="onManualCatChange()">
+              <option value="">-- Categoría --</option>
+            </select>
+          </div>
+          <div><label>Modalidad</label>
+            <select id="manual-modalidad">
+              <option value="">-- Modalidad --</option>
+              <option value="Promoción">Promoción</option>
+              <option value="Elite">Elite</option>
+            </select>
+          </div>
+          <div><label>Sexo</label>
+            <select id="manual-sexo">
+              <option value="">-- Sexo --</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+            </select>
+          </div>
+          <div><label>Peso (kg)</label><input type="number" id="manual-peso" placeholder="kg" min="5" max="150" step="0.1"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <button class="btn btn-gold btn-sm" onclick="añadirManual()">＋ Añadir</button>
+          <span id="manual-estado" style="font-size:0.82rem;color:var(--muted);"></span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="participants-table">
+          <thead>
+            <tr>
+              <th>Código QR</th><th>Nombre</th><th>Club</th><th>F. Nac.</th><th>Categoría</th>
+              <th>Modalidad</th><th>Sexo</th><th>Turno</th><th>Peso</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════ TATAMIS ══════════════════════════════ -->
+<div id="tab-tatamis" class="panel">
+  <div class="card">
+    <div class="card-title">🥋 Motor de Asignación de Tatamis</div>
+    <div class="card-subtitle">Distribuye automáticamente los participantes según la configuración del campeonato. Las reservas de tatamis definidas en Config se aplican automáticamente.</div>
+    <div id="tatamis-aviso" class="warn-box" style="display:none;">
+      ⚠️ Primero tienes que guardar la configuración del campeonato en <strong>⚙️ Config</strong>.
+    </div>
+    <div id="tatamis-por-turno" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:flex-end;"></div>
+    <button class="btn btn-gold" id="btn-calcular-tatamis" onclick="calcularTatamis()" style="display:none;">⚡ Calcular distribución</button>
+  </div>
+  <div id="tatamis-aviso-reservas" class="warn-box" style="display:none;"></div>
+  <div id="card-pesos-tatami-panel" class="card" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+      <div class="card-title" style="margin:0;">🥊 Pesos Elite por Tatami</div>
+      <button class="btn btn-outline btn-sm" onclick="sugerirPesosTatami()" title="Distribuye automáticamente los pesos equilibrando judokas. Borra la asignación actual.">🔄 Sugerir distribución</button>
+    </div>
+    <div class="card-subtitle">Asigna qué pesos van en cada tatami reservado para Elite. Los pesos disponibles son los que configuraste en ⚙️ Config. Mezcla masculino y femenino a poder ser para equilibrar la carga.</div>
+    <div id="pesos-tatami-container"></div>
+  </div>
+  <div id="tatamis-resultado" style="display:none;"></div>
+</div>
+
+<!-- ══════════════════════════════ SCANNER ══════════════════════════════ -->
+<div id="tab-scanner" class="panel">
+  <div class="scan-layout">
+    <div>
+      <div class="card">
+        <div class="card-title">📷 Control de Acceso</div>
+        <div class="scan-input-wrap">
+          <input class="scan-input" id="scan-input" type="text" placeholder="Escanea o escribe el código QR…" onkeydown="handleScanKey(event)" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div class="scan-hint">El lector USB envía los datos automáticamente al pulsar Enter</div>
+        </div>
+        <div id="result-card" class="result-card">
+          <div><div class="upload-icon">🎯</div><p style="color:var(--muted);font-size:0.9rem;">Esperando escaneo…</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ Registro de Escaneos</div>
+        <ul class="log-list" id="scan-log">
+          <li style="padding:1rem;color:var(--muted);font-size:0.85rem;text-align:center;">Sin registros todavía</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">📊 Sesión</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+          <div class="stat-card"><div class="stat-num" id="scan-ok-count">0</div><div class="stat-label">Registrados</div></div>
+          <div class="stat-card"><div class="stat-num" id="scan-err-count" style="color:var(--red)">0</div><div class="stat-label">Errores</div></div>
+        </div>
+        <div id="scan-progress-label" style="font-size:0.78rem;color:var(--muted);margin-bottom:0.4rem;">0 / 0 participantes</div>
+        <div class="progress-bar"><div class="progress-fill" id="scan-progress-bar" style="width:0%"></div></div>
+        <hr class="section-divider">
+        <button class="btn btn-outline" style="width:100%;justify-content:center;" onclick="resetSession()">🔄 Reiniciar sesión</button>
+      </div>
+      <div class="card">
+        <div class="card-title">🔍 Filtros de escaneo</div>
+        <div style="margin-bottom:0.6rem;">
+          <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">Turno</div>
+          <div class="filter-tags" id="turno-filters"><button class="filter-tag active" onclick="setTurnoFilter(null, this)">Todos</button></div>
+        </div>
+        <div style="margin-bottom:0.75rem;">
+          <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">Tatamis de este puesto</div>
+          <input type="text" id="tatami-lista" placeholder="Ej: 1,2,3 o 1,5,10"
+            style="font-family:monospace;font-size:0.85rem;width:100%;transition:opacity 0.2s;">
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-gold btn-sm" onclick="aplicarFiltros()" id="btn-aplicar-filtros">🔒 Aplicar filtros</button>
+          <button class="btn btn-outline btn-sm" onclick="desactivarFiltros()" id="btn-desactivar-filtros" style="display:none;">🔓 Desactivar filtros</button>
+        </div>
+        <div id="filtros-activos-info" style="display:none;margin-top:0.6rem;font-size:0.78rem;background:rgba(215,43,43,0.1);border:1px solid var(--red);border-radius:6px;padding:0.4rem 0.75rem;color:#fca5a5;"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+          <div class="card-title" style="margin:0;">📋 Pendientes <span id="pending-count" style="font-size:0.8rem;color:var(--muted);font-weight:400;"></span></div>
+        </div>
+        <div id="pending-list" style="max-height:400px;overflow-y:auto;font-size:0.82rem;">
+          <div style="color:var(--muted);padding:0.5rem 0;">Carga participantes primero</div>
+        </div>
+        <hr class="section-divider" style="margin:0.75rem 0;">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" onclick="exportarEscaneos()" title="Exportar escaneos de este puesto para fusionar con el otro ordenador">📤 Exportar escaneos</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('import-scan-input').click()" title="Importar escaneos del otro puesto">📥 Importar escaneos</button>
+          <input type="file" id="import-scan-input" accept=".json" style="display:none;" onchange="importarEscaneos(this)">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ INFORME ══════════════════════════════ -->
+<div id="tab-report" class="panel">
+
+  <!-- Sin config -->
+  <div id="report-no-config" class="card" style="display:none;">
+    <div class="card-title">📊 Informe</div>
+    <p style="color:var(--muted);font-size:0.85rem;">Guarda la configuración del campeonato en <strong>⚙️ Config</strong> y carga participantes para ver las estadísticas.</p>
+  </div>
+
+  <!-- Resumen general -->
+  <div class="card" id="report-card-general">
+    <div class="card-title">📊 Resumen General</div>
+    <div class="stats-row" id="report-stats"></div>
+  </div>
+
+  <!-- Por sexo -->
+  <div class="card" id="report-card-sexo">
+    <div class="card-title">👥 Por Sexo</div>
+    <div id="report-sexo"></div>
+  </div>
+
+  <!-- Por categoría -->
+  <div class="card" id="report-card-cat">
+    <div class="card-title">🏆 Por Categoría</div>
+    <div id="report-categorias"></div>
+  </div>
+
+  <!-- Por modalidad -->
+  <div class="card" id="report-card-mod">
+    <div class="card-title">⚔️ Por Modalidad</div>
+    <div id="report-modalidades"></div>
+  </div>
+
+  <!-- Por turno -->
+  <div class="card" id="report-card-turno">
+    <div class="card-title">🕐 Asistencia por Turno</div>
+    <div id="report-turnos"></div>
+  </div>
+
+  <!-- Por club -->
+  <div class="card" id="report-card-club">
+    <div class="card-title">🥋 Asistencia por Club</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Club</th><th>Inscritos</th><th>Presentes</th><th>Ausentes</th><th>% Asistencia</th></tr></thead>
+      <tbody id="report-body"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Sin datos</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- Lista presentes -->
+  <div class="card">
+    <div class="card-title">✅ Presentes — Lista completa</div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Código</th><th>Nombre</th><th>Club</th><th>Categoría</th><th>Turno</th><th>Hora</th></tr></thead>
+      <tbody id="present-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Sin escaneos</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;"><button class="btn btn-gold" onclick="exportarInformePDF()">📄 Exportar informe completo en PDF</button></div>
+</div>
+
+<div id="qr-hidden"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// Catálogo fijo de categorías
+const CATALOGO_CATEGORIAS = [
+  { nombre: 'Biberón',     curso: '4º Infantil' },
+  { nombre: 'Prebenjamín', curso: '5º-6º Infantil' },
+  { nombre: 'Benjamín B',  curso: '1º-2º Primaria' },
+  { nombre: 'Benjamín A',  curso: '3º-4º Primaria' },
+  { nombre: 'Alevín',      curso: '5º-6º Primaria' },
+  { nombre: 'Infantil',    curso: '1º-2º ESO' },
+  { nombre: 'Cadete',      curso: '3º-4º ESO / 1º Bach' },
+];
+let participants = [];
+let scanned = {};
+let scanOkCount = 0, scanErrCount = 0;
+let activeTurnoFilter = null;
+let activeTatamiFilter = null; // { desde, hasta }
+let codeCounter = 1;
+let distribucionTatamis = {};
+let horasTurnos = {};
+
+// Configuración del campeonato
+let config = {
+  turnos: [
+    { id: 1, nombre: 'Turno 1', llegada: '', inicio: '' },
+    { id: 2, nombre: 'Turno 2', llegada: '', inicio: '' },
+    { id: 3, nombre: 'Turno 3', llegada: '', inicio: '' },
+  ],
+  categorias: [
+    { nombre: 'Biberón',     turnoId: 1, modalidad: 'solo-promo' },
+    { nombre: 'Prebenjamín', turnoId: 1, modalidad: 'solo-promo' },
+    { nombre: 'Benjamín B',  turnoId: 1, modalidad: 'solo-promo' },
+    { nombre: 'Benjamín A',  turnoId: 2, modalidad: 'ambas', pesosM: '', pesosF: '' },
+  ],
+  reservas: [
+    { categoria: 'Biberón', tatamis: '1' },
+  ],
+  margenPeso: 1.5,
+};
+
+let configGuardada = false;
+
+// ══════════════════════════════ TABS ══════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'scanner') setTimeout(() => document.getElementById('scan-input').focus(), 100);
+  if (name === 'report') renderReport();
+  if (name === 'tatamis') renderTatamisConfig();
+}
+
+// ══════════════════════════════ CONFIG ══════════════════════════════
+let turnoIdCounter = 10;
+let catIdCounter = 10;
+let reservaIdCounter = 10;
+
+function renderConfig() {
+  renderTurnosConfig();
+  renderCatsConfig();
+  renderReservasConfig();
+  renderPesosElite();
+  renderManualCatSelect();
+  renderTatamisConfig();
+}
+
+function renderTurnosConfig() {
+  const c = document.getElementById('turnos-container');
+  c.innerHTML = config.turnos.map((t, i) => `
+    <div class="turno-config-card">
+      <div class="turno-config-header">
+        <span class="turno-config-title">TURNO ${i + 1}</span>
+        ${config.turnos.length > 1 ? `<button class="btn btn-danger btn-sm" onclick="removeTurno(${i})">✕ Quitar</button>` : ''}
+      </div>
+      <div class="turno-config-grid">
+        <div><label>Nombre del turno</label><input type="text" value="${t.nombre}" onchange="config.turnos[${i}].nombre=this.value" placeholder="Ej: Turno 1"></div>
+        <div></div>
+        <div><label>Hora de llegada</label><input type="time" value="${t.llegada}" onchange="config.turnos[${i}].llegada=this.value"></div>
+        <div><label>Hora de inicio</label><input type="time" value="${t.inicio}" onchange="config.turnos[${i}].inicio=this.value"></div>
+      </div>
+    </div>`).join('');
+}
+
+function addTurno() {
+  if (config.turnos.length >= 5) { showToast('⚠️ Máximo 5 turnos'); return; }
+  config.turnos.push({ id: ++turnoIdCounter, nombre: `Turno ${config.turnos.length + 1}`, llegada: '', inicio: '' });
+  renderTurnosConfig();
+  renderCatsConfig();
+}
+
+function removeTurno(i) {
+  config.turnos.splice(i, 1);
+  // Corregir categorías que apuntaban a un turno que ya no existe
+  config.categorias.forEach(c => {
+    if (c.turnoId > config.turnos.length) c.turnoId = 1;
+  });
+  renderTurnosConfig();
+  renderCatsConfig();
+}
+
+function renderCatsConfig() {
+  const c = document.getElementById('cats-container');
+  // Categorías ya seleccionadas
+  const seleccionadas = new Set(config.categorias.map(c => c.nombre));
+  // Opciones disponibles para añadir (las que no están ya)
+  const disponibles = CATALOGO_CATEGORIAS.filter(c => !seleccionadas.has(c.nombre));
+
+  c.innerHTML = config.categorias.map((cat, i) => {
+    // Corregir turnoId si apunta a un turno que no existe
+    if (cat.turnoId > config.turnos.length) cat.turnoId = 1;
+    const info = CATALOGO_CATEGORIAS.find(c => c.nombre === cat.nombre);
+    return `
+    <div class="cat-config-row">
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <span style="font-weight:600;font-size:0.9rem;">${cat.nombre}</span>
+        <span style="font-size:0.75rem;color:var(--muted);">${info?.curso || ''}</span>
+      </div>
+      <select onchange="config.categorias[${i}].turnoId=parseInt(this.value)">
+        ${config.turnos.map((t, ti) => '<option value="' + (ti+1) + '" ' + (cat.turnoId === ti+1 ? 'selected' : '') + '>' + t.nombre + '</option>').join('')}
+      </select>
+      <select onchange="config.categorias[${i}].modalidad=this.value; renderPesosElite();">
+        <option value="solo-promo" ${cat.modalidad==='solo-promo'?'selected':''}>Solo Promoción</option>
+        <option value="ambas" ${cat.modalidad==='ambas'?'selected':''}>Elite + Promoción</option>
+        <option value="solo-elite" ${cat.modalidad==='solo-elite'?'selected':''}>Solo Elite</option>
+      </select>
+      <input type="text" value="${cat.anosValidos || ''}" placeholder="Ej: 2017,2018"
+        oninput="config.categorias[${i}].anosValidos=this.value.trim()"
+        title="Años de nacimiento válidos para esta categoría, separados por comas"
+        style="font-family:monospace;font-size:0.82rem;">
+      <button class="btn btn-danger btn-sm" onclick="removeCat(${i})">✕ Quitar</button>
+    </div>`;
+  }).join('');
+
+  // Botón añadir con desplegable
+  document.getElementById('btn-add-cat').style.display = disponibles.length ? '' : 'none';
+  document.getElementById('select-add-cat').innerHTML =
+    '<option value="">-- Añadir categoría --</option>' +
+    disponibles.map(c => `<option value="${c.nombre}">${c.nombre} — ${c.curso}</option>`).join('');
+}
+
+function addCategoriaFromSelect() {
+  const sel = document.getElementById('select-add-cat');
+  const nombre = sel.value;
+  if (!nombre) return;
+  config.categorias.push({ nombre, turnoId: 1, modalidad: 'solo-promo' });
+  renderCatsConfig();
+}
+
+function removeCat(i) {
+  config.categorias.splice(i, 1);
+  renderCatsConfig();
+}
+
+function renderPesosElite() {
+  const catsElite = config.categorias.filter(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+  const card = document.getElementById('card-pesos-elite');
+  const container = document.getElementById('pesos-elite-container');
+
+  if (!catsElite.length) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+
+  container.innerHTML = catsElite.map((cat, _) => {
+    const i = config.categorias.indexOf(cat);
+    return `
+      <div style="background:var(--dark); border:1px solid var(--border); border-radius:8px; padding:1rem; margin-bottom:0.75rem;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1rem; letter-spacing:0.08em; color:var(--gold); margin-bottom:0.75rem;">${cat.nombre}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+          <div>
+            <label>Masculino</label>
+            <input type="text" value="${cat.pesosM || ''}" placeholder="-26, -30, -34, -38, -42, -46, +46"
+              oninput="config.categorias[${i}].pesosM=this.value" style="font-family:monospace; font-size:0.85rem;">
+          </div>
+          <div>
+            <label>Femenino</label>
+            <input type="text" value="${cat.pesosF || ''}" placeholder="-24, -28, -32, -36, -40, -44, +44"
+              oninput="config.categorias[${i}].pesosF=this.value" style="font-family:monospace; font-size:0.85rem;">
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Fórmula combates con repesca completa ──
+// Cuadro eliminatoria + repesca completa (todos repescan)
+// N judokas → bracket de potencia de 2 → N-1 combates principales + ~N-2 repesca
+function renderPesosTatami() {
+  const card = document.getElementById('card-pesos-tatami-panel');
+  const container = document.getElementById('pesos-tatami-container');
+  if (!card || !container) return;
+
+  const reservasElite = config.reservas.filter(function(r) {
+    if (!r.categoria || !r.tatamis) return false;
+    const cat = config.categorias.find(function(c) { return c.nombre === r.categoria; });
+    return cat && (cat.modalidad === 'ambas' || cat.modalidad === 'solo-elite') &&
+           (r.modalidad === 'Elite' || !r.modalidad);
+  });
+
+  if (!reservasElite.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  if (!config.pesosPorTatami) config.pesosPorTatami = {};
+
+  container.innerHTML = reservasElite.map(function(r, ri) {
+    const cat = config.categorias.find(function(c) { return c.nombre === r.categoria; });
+    const tatamisNums = r.tatamis.split(',').map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
+    const pesosM = cat.pesosM ? cat.pesosM.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+    const pesosF = cat.pesosF ? cat.pesosF.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+    const todosLosPesos = pesosM.map(function(p) { return { peso: p, sexo: 'M' }; })
+      .concat(pesosF.map(function(p) { return { peso: p, sexo: 'F' }; }));
+
+    if (!todosLosPesos.length) return '<div style="color:var(--muted);font-size:0.82rem;margin-bottom:0.75rem;">' + r.categoria + ': configura primero los pesos Elite.</div>';
+
+    const key = r.categoria + '|' + r.tatamis;
+    if (!config.pesosPorTatami[key]) config.pesosPorTatami[key] = {};
+
+    // Contar judokas por peso usando el listado cargado
+    function contarJudokas(asignados) {
+      if (!participants.length) return 0;
+      return asignados.reduce(function(total, a) {
+        const sexoFiltro = a.sexo === 'M' ? 'masculino' : 'femenino';
+        const count = participants.filter(function(p) {
+          return p.categoria === r.categoria && p.modalidad === 'Elite' &&
+                 (p.sexo || '').toLowerCase().includes(sexoFiltro) &&
+                 asignarPesoElite(parseFloat(p.peso) || 0, a.sexo === 'M' ? (cat.pesosM || '') : (cat.pesosF || '')) === a.peso;
+        }).length;
+        return total + count;
+      }, 0);
+    }
+
+    const totalJudokasPorTatami = {};
+    tatamisNums.forEach(function(tn) {
+      const asignados = config.pesosPorTatami[key][tn] || [];
+      totalJudokasPorTatami[tn] = contarJudokas(asignados);
+    });
+    const maxJudokas = Math.max(1, Math.max.apply(null, Object.values(totalJudokasPorTatami)));
+
+    let html = '<div style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem;">';
+    html += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:1rem;letter-spacing:0.08em;color:var(--gold);margin-bottom:0.75rem;">' + r.categoria + ' \u2014 Tatamis ' + r.tatamis + '</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:0.75rem;">';
+
+    tatamisNums.forEach(function(tn) {
+      const asignados = config.pesosPorTatami[key][tn] || [];
+      const judokas = totalJudokasPorTatami[tn];
+      const pct = Math.round((judokas / maxJudokas) * 100);
+      const barColor = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
+
+      // Pesos ya asignados a CUALQUIER tatami (incluyendo este) — no repetir
+      const pesosUsados = [];
+      Object.keys(config.pesosPorTatami[key]).forEach(function(k) {
+        (config.pesosPorTatami[key][k] || []).forEach(function(a) {
+          const id = a.peso + '|' + a.sexo;
+          if (parseInt(k) !== tn && pesosUsados.indexOf(id) === -1) pesosUsados.push(id);
+        });
+      });
+      // También excluir los ya asignados a ESTE tatami
+      (config.pesosPorTatami[key][tn] || []).forEach(function(a) {
+        const id = a.peso + '|' + a.sexo;
+        if (pesosUsados.indexOf(id) === -1) pesosUsados.push(id);
+      });
+      const pesosDisponibles = todosLosPesos.filter(function(p) { return pesosUsados.indexOf(p.peso + '|' + p.sexo) === -1; });
+
+      html += '<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:0.75rem;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">';
+      html += '<span style="font-weight:700;font-size:0.85rem;">Tatami ' + tn + '</span>';
+      html += '<span style="font-size:0.75rem;color:var(--muted);">' + judokas + ' judokas</span>';
+      html += '</div>';
+      // Barra de carga
+      html += '<div style="height:4px;background:var(--border);border-radius:2px;margin-bottom:0.5rem;">';
+      html += '<div style="height:4px;background:' + barColor + ';border-radius:2px;width:' + pct + '%;transition:width 0.3s;"></div>';
+      html += '</div>';
+      // Badges de pesos asignados
+      html += '<div style="min-height:28px;display:flex;flex-wrap:wrap;gap:3px;margin-bottom:0.5rem;">';
+      asignados.forEach(function(a) {
+        const nJudokas = participants.filter(function(p) {
+          const sexoFiltro = a.sexo === 'M' ? 'masculino' : 'femenino';
+          return p.categoria === r.categoria && p.modalidad === 'Elite' &&
+                 (p.sexo || '').toLowerCase().includes(sexoFiltro) &&
+                 asignarPesoElite(parseFloat(p.peso) || 0, a.sexo === 'M' ? (cat.pesosM || '') : (cat.pesosF || '')) === a.peso;
+        }).length;
+        const icon = a.sexo === 'M' ? '\u2642' : '\u2640';
+        html += '<span style="background:rgba(215,43,43,0.15);border:1px solid var(--red);border-radius:4px;padding:2px 6px;font-size:0.75rem;font-family:monospace;display:inline-flex;align-items:center;gap:3px;">';
+        html += icon + ' ' + a.peso;
+        if (nJudokas) html += ' <span style="color:var(--muted);font-size:0.68rem;">(' + nJudokas + ')</span>';
+        html += ' <button onclick="quitarPesoTatami(\'' + key.replace(/'/g, "\\'") + '\',' + tn + ',\'' + a.peso.replace(/'/g, "\\'") + '\',\'' + a.sexo + '\')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:0 0 0 2px;font-size:0.68rem;line-height:1;">\u2715</button>';
+        html += '</span>';
+      });
+      html += '</div>';
+      // Desplegable pesos disponibles
+      html += '<select onchange="asignarPesoTatami(\'' + key.replace(/'/g, "\\'") + '\',' + tn + ',this)" style="font-size:0.78rem;width:100%;">';
+      html += '<option value="">\uFF0B A\u00f1adir peso\u2026</option>';
+      pesosDisponibles.forEach(function(p) {
+        const pesosStr = p.sexo === 'M' ? (cat.pesosM || '') : (cat.pesosF || '');
+        const sexoFiltro = p.sexo === 'M' ? 'masculino' : 'femenino';
+        const n = participants.filter(function(pt) {
+          return pt.categoria === r.categoria && pt.modalidad === 'Elite' &&
+                 (pt.sexo || '').toLowerCase().includes(sexoFiltro) &&
+                 asignarPesoElite(parseFloat(pt.peso) || 0, pesosStr) === p.peso;
+        }).length;
+        const icon = p.sexo === 'M' ? '\u2642 Masc' : '\u2640 Fem';
+        html += '<option value="' + p.peso + '|' + p.sexo + '">' + icon + ' ' + p.peso + (n ? ' (' + n + ')' : ' (0)') + '</option>';
+      });
+      html += '</select>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+    return html;
+  }).join('');
+}
+
+function sugerirPesosTatami() {
+  if (!participants.length) { showToast('⚠️ Carga el listado primero'); return; }
+  if (!config.pesosPorTatami) config.pesosPorTatami = {};
+
+  const reservasElite = config.reservas.filter(function(r) {
+    if (!r.categoria || !r.tatamis) return false;
+    const cat = config.categorias.find(function(c) { return c.nombre === r.categoria; });
+    return cat && (cat.modalidad === 'ambas' || cat.modalidad === 'solo-elite') &&
+           (r.modalidad === 'Elite' || !r.modalidad);
+  });
+
+  reservasElite.forEach(function(r) {
+    const cat = config.categorias.find(function(c) { return c.nombre === r.categoria; });
+    if (!cat) return;
+    const key = r.categoria + '|' + r.tatamis;
+    const tatamisNums = r.tatamis.split(',').map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
+    const pesosM = cat.pesosM ? cat.pesosM.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+    const pesosF = cat.pesosF ? cat.pesosF.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
+
+    function nJudokas(peso, sexo) {
+      const pesosStr = sexo === 'M' ? (cat.pesosM || '') : (cat.pesosF || '');
+      const sexoFiltro = sexo === 'M' ? 'masculino' : 'femenino';
+      return participants.filter(function(p) {
+        return p.categoria === r.categoria && p.modalidad === 'Elite' &&
+               (p.sexo || '').toLowerCase().includes(sexoFiltro) &&
+               asignarPesoElite(parseFloat(p.peso) || 0, pesosStr) === peso;
+      }).length;
+    }
+
+    var todosPesos = [];
+    // Intercalar M y F para maximizar mezcla en cada tatami
+    var listM = pesosM.map(function(p) { return { peso: p, sexo: 'M', n: nJudokas(p, 'M') }; })
+                      .sort(function(a,b) { return b.n - a.n; });
+    var listF = pesosF.map(function(p) { return { peso: p, sexo: 'F', n: nJudokas(p, 'F') }; })
+                      .sort(function(a,b) { return b.n - a.n; });
+    var i = 0, j = 0;
+    while (i < listM.length || j < listF.length) {
+      if (i < listM.length) todosPesos.push(listM[i++]);
+      if (j < listF.length) todosPesos.push(listF[j++]);
+    }
+    if (!todosPesos.length) return;
+
+    // Resetear y distribuir
+    config.pesosPorTatami[key] = {};
+    var cargaTatami = {};
+    tatamisNums.forEach(function(tn) { cargaTatami[tn] = 0; config.pesosPorTatami[key][tn] = []; });
+    todosPesos.forEach(function(p) {
+      var minTatami = tatamisNums.reduce(function(min, tn) {
+        return cargaTatami[tn] < cargaTatami[min] ? tn : min;
+      }, tatamisNums[0]);
+      config.pesosPorTatami[key][minTatami].push({ peso: p.peso, sexo: p.sexo });
+      cargaTatami[minTatami] += p.n;
+    });
+  });
+
+  renderPesosTatami();
+  guardarSesion();
+  showToast('✅ Distribución sugerida — revísala y ajusta si quieres');
+}
+
+function asignarPesoTatami(key, tatamiNum, selectEl) {
+  const val = selectEl.value;
+  if (!val) return;
+  const parts = val.split('|');
+  const peso = parts[0], sexo = parts[1];
+  if (!config.pesosPorTatami) config.pesosPorTatami = {};
+  if (!config.pesosPorTatami[key]) config.pesosPorTatami[key] = {};
+  if (!config.pesosPorTatami[key][tatamiNum]) config.pesosPorTatami[key][tatamiNum] = [];
+  if (!config.pesosPorTatami[key][tatamiNum].some(function(a) { return a.peso === peso && a.sexo === sexo; })) {
+    config.pesosPorTatami[key][tatamiNum].push({ peso: peso, sexo: sexo });
+  }
+  selectEl.value = '';
+  renderPesosTatami();
+  guardarSesion();
+}
+
+function quitarPesoTatami(key, tatamiNum, peso, sexo) {
+  if (!config.pesosPorTatami || !config.pesosPorTatami[key] || !config.pesosPorTatami[key][tatamiNum]) return;
+  config.pesosPorTatami[key][tatamiNum] = config.pesosPorTatami[key][tatamiNum].filter(function(a) {
+    return !(a.peso === peso && a.sexo === sexo);
+  });
+  renderPesosTatami();
+  guardarSesion();
+}
+
+function parsePesos(str) {
+  return str.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+function asignarPesoElite(pesoReal, pesosStr) {
+  const margen = config.margenPeso ?? 1.5;
+  const pesos = parsePesos(pesosStr);
+  for (const p of pesos) {
+    if (p.startsWith('+')) return p;
+    const limite = parseFloat(p.replace('-', ''));
+    if (pesoReal <= limite + margen) return p;
+  }
+  return pesos[pesos.length - 1] || '';
+}
+
+function renderReservasConfig() {
+  const c = document.getElementById('reservas-container');
+  if (!config.reservas.length) {
+    c.innerHTML = '<p style="color:var(--muted);font-size:0.82rem;margin-bottom:0.5rem;">Sin reservas configuradas.</p>';
+    return;
+  }
+  c.innerHTML = config.reservas.map((r, i) => {
+    const catConf = config.categorias.find(c => c.nombre === r.categoria);
+    const tieneElite = catConf && (catConf.modalidad === 'ambas' || catConf.modalidad === 'solo-elite');
+    const tienePromo = catConf && (catConf.modalidad === 'ambas' || catConf.modalidad === 'solo-promo');
+    const mostrarModalidad = tieneElite && tienePromo; // solo si tiene ambas
+
+    return `
+    <div style="display:grid; grid-template-columns:${mostrarModalidad ? '1.5fr 1fr 1fr auto' : '1.5fr 1fr auto'}; gap:0.6rem; align-items:center; margin-bottom:0.5rem;">
+      <select onchange="config.reservas[${i}].categoria=this.value; renderReservasConfig();">
+        <option value="">-- Categoría --</option>
+        ${config.categorias.map(c => {
+          // Contar cuántas veces está esta categoría en reservas
+          const vecesUsada = config.reservas.filter((rr, ri) => ri !== i && rr.categoria === c.nombre).length;
+          const catConf = config.categorias.find(cc => cc.nombre === c.nombre);
+          const tieneAmbas = catConf && catConf.modalidad === 'ambas';
+          // Solo ocultar si ya está 2 veces (ambas modalidades) o 1 vez si solo tiene una modalidad
+          const maxVeces = tieneAmbas ? 2 : 1;
+          if (vecesUsada >= maxVeces && r.categoria !== c.nombre) return '';
+          return `<option value="${c.nombre}" ${r.categoria===c.nombre?'selected':''}>${c.nombre}</option>`;
+        }).join('')}
+      </select>
+      ${mostrarModalidad ? `
+      <select onchange="config.reservas[${i}].modalidad=this.value">
+        <option value="">-- Modalidad --</option>
+        <option value="Elite" ${r.modalidad==='Elite'?'selected':''}>Elite</option>
+        <option value="Promoción" ${r.modalidad==='Promoción'?'selected':''}>Promoción</option>
+      </select>` : ''}
+      <input type="text" value="${r.tatamis}" onchange="config.reservas[${i}].tatamis=this.value" placeholder="Ej: 1 o 1,2">
+      <button class="btn btn-danger btn-sm" onclick="removeReserva(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function addReserva() {
+  renderPesosTatami();
+  config.reservas.push({ categoria: '', modalidad: '', tatamis: '' });
+  renderReservasConfig();
+}
+
+function removeReserva(i) {
+  config.reservas.splice(i, 1);
+  renderReservasConfig();
+  renderPesosTatami();
+}
+
+function validarPesos(str) {
+  if (/,,/.test(str)) return false; // comas dobles
+  if (/,$/.test(str.trim())) return false; // coma al final
+  if (/^,/.test(str.trim())) return false; // coma al inicio
+  const partes = str.split(',').map(s => s.trim()).filter(Boolean);
+  if (!partes.length) return false;
+  return partes.every(p => /^[+-]\d+(\.\d+)?$/.test(p));
+}
+
+function validarTatamis(str) {
+  if (/,,/.test(str)) return false;
+  if (/,$/.test(str.trim())) return false;
+  if (/^,/.test(str.trim())) return false;
+  const partes = str.split(',').map(s => s.trim()).filter(Boolean);
+  if (!partes.length) return false;
+  return partes.every(p => /^\d+$/.test(p));
+}
+
+function guardarConfig() {
+  const errores = [];
+
+  // Validar turnos
+  config.turnos.forEach((t, i) => {
+    if (!t.nombre.trim()) errores.push(`Turno ${i+1}: falta el nombre`);
+    if (!t.llegada)       errores.push(`${t.nombre || 'Turno '+(i+1)}: falta la hora de llegada`);
+    if (!t.inicio)        errores.push(`${t.nombre || 'Turno '+(i+1)}: falta la hora de inicio`);
+  });
+
+  // Validar categorías
+  if (!config.categorias.length) {
+    errores.push('Añade al menos una categoría');
+  } else {
+    config.categorias.forEach(c => {
+      if (!c.turnoId) errores.push(`Categoría "${c.nombre}": no tiene turno asignado`);
+      if (!c.modalidad) errores.push(`Categoría "${c.nombre}": no tiene modalidad asignada`);
+    });
+  }
+
+  // Leer margen de peso del input antes de validar
+  const margenInput = document.getElementById('input-margen-peso');
+  if (margenInput) config.margenPeso = margenInput.value.trim() === '' ? null : parseFloat(margenInput.value);
+
+  const hayElite = config.categorias.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+  if (hayElite && (config.margenPeso === null || config.margenPeso === undefined || isNaN(config.margenPeso))) {
+    errores.push('Debes establecer un margen de peso (puede ser 0)');
+  }
+
+  // Validar pesos Elite
+  config.categorias.filter(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite').forEach(cat => {
+    if (!cat.pesosM?.trim()) errores.push(`Categoría "${cat.nombre}": faltan los pesos Elite Masculino`);
+    else if (!validarPesos(cat.pesosM)) errores.push(`Categoría "${cat.nombre}" Masculino: formato incorrecto. Usa: -26, -30, +46`);
+    if (!cat.pesosF?.trim()) errores.push(`Categoría "${cat.nombre}": faltan los pesos Elite Femenino`);
+    else if (!validarPesos(cat.pesosF)) errores.push(`Categoría "${cat.nombre}" Femenino: formato incorrecto. Usa: -24, -28, +44`);
+
+    // Obligar a tener reserva de tatamis para Elite
+    const tieneReservaElite = config.reservas.some(r =>
+      r.categoria === cat.nombre && r.tatamis?.trim() &&
+      (r.modalidad === 'Elite' || r.modalidad === '' || !r.modalidad)
+    );
+    if (!tieneReservaElite) {
+      errores.push(`Categoría "${cat.nombre}" tiene Elite — añade una reserva de tatamis para ella en 📌 Reservas de Tatamis`);
+    }
+  });
+  config.reservas.forEach((r, i) => {
+    if (!r.categoria) errores.push(`Reserva ${i+1}: no tiene categoría seleccionada`);
+    if (!r.tatamis?.trim()) errores.push(`Reserva de "${r.categoria || i+1}": no tiene tatamis asignados`);
+    else if (!validarTatamis(r.tatamis)) errores.push(`Reserva de "${r.categoria}": tatamis con formato incorrecto. Usa números separados por comas: 1,2,3`);
+  });
+
+  // Validar tatamis duplicados entre reservas del mismo turno
+  const tatamisPorTurno = {};
+  config.reservas.forEach(r => {
+    if (!r.categoria || !r.tatamis?.trim()) return;
+    const cat = config.categorias.find(c => c.nombre === r.categoria);
+    if (!cat) return;
+    const turnoId = cat.turnoId;
+    if (!tatamisPorTurno[turnoId]) tatamisPorTurno[turnoId] = {};
+    r.tatamis.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)).forEach(num => {
+      if (tatamisPorTurno[turnoId][num]) {
+        errores.push(`Tatami ${num} está asignado a "${tatamisPorTurno[turnoId][num]}" y a "${r.categoria}" en el mismo turno`);
+      } else {
+        tatamisPorTurno[turnoId][num] = r.categoria;
+      }
+    });
+  });
+
+  const estadoEl = document.getElementById('config-estado');
+  if (errores.length) {
+    estadoEl.innerHTML = `
+      <div class="warn-box" style="margin-top:0.75rem;">
+        <strong>⚠️ Faltan los siguientes datos:</strong>
+        <ul style="margin-top:0.5rem;padding-left:1.2rem;line-height:1.8;">
+          ${errores.map(e => `<li>${e}</li>`).join('')}
+        </ul>
+      </div>`;
+    return;
+  }
+
+  configGuardada = true;
+  actualizarEstadoBotones();
+  // Sincronizar horas al guardar
+  horasTurnos = {};
+  config.turnos.forEach((t, i) => { horasTurnos[i+1] = { llegada: t.llegada, inicio: t.inicio, nombre: t.nombre }; });
+
+  estadoEl.innerHTML = `<span style="color:var(--green)">✅ Configuración guardada correctamente</span>`;
+  setTimeout(() => { estadoEl.innerHTML = ''; }, 3000);
+  renderManualCatSelect();
+  renderTatamisConfig();
+  if (participants.length) { renderAdmin(); buildTurnoFilters(); actualizarEstadoBotones(); }
+  guardarSesion();
+}
+
+// ══════════════════════════════ HORAS ══════════════════════════════
+function horasConfiguradas() {
+  return configGuardada && config.turnos.every(t => t.llegada && t.inicio);
+}
+
+function getInfoTurno(turnoNombre) {
+  const idx = config.turnos.findIndex(t => t.nombre === turnoNombre);
+  if (idx === -1) return turnoNombre || '';
+  const t = config.turnos[idx];
+  if (!t.llegada || !t.inicio) return turnoNombre;
+  return `${t.nombre} · Llegada ${t.llegada} · Inicio ${t.inicio}`;
+}
+
+// ══════════════════════════════ FILE HANDLING ══════════════════════════════
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = e => parseCSV(e.target.result);
+    reader.readAsText(file, 'UTF-8');
+  } else {
+    const reader = new FileReader();
+    reader.onload = e => parseExcel(e.target.result);
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseExcel(buffer) {
+  const wb = XLSX.read(buffer, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  parseCSV(XLSX.utils.sheet_to_csv(ws));
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) { showToast('⚠️ El archivo parece vacío'); return; }
+  const delim = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(delim).map(h => h.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  const idx = {};
+  const aliases = {
+    nombre: ['nombre', 'name', 'deportista', 'judoka', 'atleta'],
+    apellidos: ['apellidos', 'apellido', 'surname', 'lastname'],
+    fnac: ['fnac', 'fecha_nac', 'fechanacimiento', 'nacimiento', 'birthdate', 'dob'],
+    club: ['club','equipo','team'],
+    categoria: ['categoria','category','cat'],
+    modalidad: ['modalidad','mod','modality'],
+    sexo: ['sexo','sex','genero','gender'],
+    turno: ['turno','shift','sesion','session'],
+    tatami: ['tatami','mat','pista'],
+    peso: ['peso','weight','kg'],
+  };
+  for (const [field, names] of Object.entries(aliases)) {
+    for (const name of names) { const i = headers.indexOf(name); if (i !== -1) { idx[field] = i; break; } }
+  }
+  if (idx.nombre === undefined || idx.club === undefined) { showToast('❌ Columnas "nombre" y "club" no encontradas'); return; }
+
+  const nuevos = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(delim).map(c => c.trim().replace(/^"|"$/g, ''));
+    if (!cols[idx.nombre]) continue;
+    const nombreBase = cols[idx.nombre] || '';
+    const apellidosBase = idx.apellidos !== undefined ? cols[idx.apellidos] : '';
+    const nombreCompleto = [nombreBase, apellidosBase].filter(Boolean).join(' ');
+    const catNombre = idx.categoria !== undefined ? cols[idx.categoria] : '';
+    const catConf = config.categorias.find(c => c.nombre === catNombre);
+    // Turno siempre desde Config, nunca del CSV
+    const turnoNombre = catConf ? (config.turnos[catConf.turnoId - 1]?.nombre || '') : '';
+    nuevos.push({
+      id: participants.length + nuevos.length + 1,
+      code: 'JUDOBASE' + String(codeCounter++).padStart(4, '0'),
+      nombre: nombreCompleto,
+      club: cols[idx.club] || '',
+      categoria: catNombre,
+      modalidad: idx.modalidad !== undefined ? cols[idx.modalidad] : '',
+      sexo: idx.sexo !== undefined ? cols[idx.sexo] : '',
+      fnac: idx.fnac !== undefined ? cols[idx.fnac] : '',
+      turno: turnoNombre,
+      tatami: idx.tatami !== undefined ? cols[idx.tatami] : '',
+      peso: idx.peso !== undefined ? cols[idx.peso] : '',
+    });
+  }
+  participants = participants.concat(nuevos);
+  document.getElementById('btn-quitar-wrap').style.display = '';
+  document.getElementById('admin-content').style.display = '';
+  renderAdmin();
+  buildTurnoFilters();
+  showToast(`✅ ${nuevos.length} añadidos · Total: ${participants.length}`);
+  guardarSesion();
+}
+
+function quitarListado() {
+  participants = []; scanned = {}; scanOkCount = 0; scanErrCount = 0; codeCounter = 1; distribucionTatamis = {};
+  document.getElementById('scan-ok-count').textContent = '0';
+  document.getElementById('scan-err-count').textContent = '0';
+  document.getElementById('admin-content').style.display = 'none';
+  document.getElementById('tatamis-resultado').style.display = 'none';
+  document.getElementById('btn-quitar-wrap').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  showToast('🗑️ Listado eliminado');
+}
+
+// ══════════════════════════════ EXPORTACIÓN IJF ══════════════════════════════
+
+function renderCardIJF() {
+  const card = document.getElementById('card-ijf');
+  if (!card) return;
+  const catsElite = config.categorias.filter(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+  const hayElite = catsElite.length > 0;
+  const hayParticipantes = participants.some(p => p.modalidad === 'Elite');
+
+  if (!hayElite || !hayParticipantes) {
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+
+  // Actualizar margen en el texto
+  const margenLabel = document.getElementById('ijf-margen-label');
+  if (margenLabel) margenLabel.textContent = config.margenPeso ?? 1.5;
+
+  // Comprobar pesos configurados
+  const sinPesos = catsElite.filter(c => !c.pesosM?.trim() || !c.pesosF?.trim());
+  const avisoEl = document.getElementById('ijf-aviso-pesos');
+  if (sinPesos.length) {
+    avisoEl.style.display = '';
+    avisoEl.innerHTML = `⚠️ Faltan pesos Elite en: ${sinPesos.map(c=>c.nombre).join(', ')}. Ve a <strong>⚙️ Config</strong> para configurarlos.`;
+  } else {
+    avisoEl.style.display = 'none';
+  }
+
+  const preview = document.getElementById('ijf-preview');
+  let html = '';
+  catsElite.forEach(cat => {
+    const eliteM = participants.filter(p => p.categoria === cat.nombre && p.modalidad === 'Elite' && (p.sexo||'').toLowerCase().includes('masc'));
+    const eliteF = participants.filter(p => p.categoria === cat.nombre && p.modalidad === 'Elite' && (p.sexo||'').toLowerCase().includes('fem'));
+    if (!eliteM.length && !eliteF.length) return;
+    html += `<div style="background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.5rem;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--gold);margin-bottom:0.5rem;">${cat.nombre}</div>
+      <div style="display:flex;gap:1.5rem;font-size:0.82rem;color:var(--muted);">
+        <span>👦 Masculino: <strong style="color:var(--text)">${eliteM.length}</strong></span>
+        <span>👧 Femenino: <strong style="color:var(--text)">${eliteF.length}</strong></span>
+      </div>
+    </div>`;
+  });
+  preview.innerHTML = html || '<p style="color:var(--muted);font-size:0.85rem;">Sin participantes Elite cargados.</p>';
+}
+
+function asignarCategoriaIJF(pesoReal, pesosStr) {
+  const margen = config.margenPeso ?? 1.5;
+  const peso = parseFloat(pesoReal) || 0;
+  const pesos = pesosStr.split(',').map(s => s.trim()).filter(Boolean);
+  for (const p of pesos) {
+    if (p.startsWith('+')) return p + ' kg';
+    const limite = parseFloat(p.replace('-', ''));
+    if (peso <= limite + margen) return p + ' kg';
+  }
+  // Si el peso es 0 o no válido, asignar al primer peso
+  return pesos[0] ? pesos[0] + ' kg' : '?';
+}
+
+function generarTXTijf(participantesElite, nombreEvento) {
+  return participantesElite.map((p, i) => {
+    const cat = config.categorias.find(c => c.nombre === p.categoria);
+    const esMasc = (p.sexo||'').toLowerCase().includes('masc');
+    const pesosStr = esMasc ? (cat?.pesosM || '') : (cat?.pesosF || '');
+    if (!pesosStr) return null; // sin pesos configurados — saltar
+    const categoriaIJF = asignarCategoriaIJF(p.peso, pesosStr);
+    const genero = esMasc ? 'm' : 'w';
+    const partes = p.nombre.split(' ');
+    const nombre = partes[0] || '';
+    const apellido = partes.slice(1).join(' ').toUpperCase() || nombre.toUpperCase();
+    const clubCode = CLUB_CODES[p.club] || 'UNK';
+    const fnac = (p.fnac || '01.01.2000').replace(/\//g, '.');
+    return [
+      i + 1, nombreEvento, '', apellido, nombre,
+      clubCode, clubCode, '', fnac, 'Competitor',
+      genero, categoriaIJF, '', 0, 0, '', 0, 0, 0, '', '', '', 0,
+      '0000-00-00 00:00:00'
+    ].join('\t');
+  }).filter(Boolean).map((row, i) => {
+    // Reasignar IDs correlativos tras filtrar
+    const cols = row.split('\t');
+    cols[0] = i + 1;
+    return cols.join('\t');
+  }).join('\n');
+}
+
+// Mapa de clubs a códigos IJF
+const CLUB_CODES = {
+  'Judo Club Arteixo': 'ART', 'Judo Club Base': 'BAS', 'Judo Club Bergantinos': 'BER',
+  'Judo Bitacora Ferrol': 'BIT', 'Judo Club Blume': 'BLU', 'Judo Club Cambre': 'CAM',
+  'Club Campolongo': 'CAP', 'Compostela Judo Club': 'COM', 'Judo Club Coruna': 'COR',
+  'Judo Club Culleredo': 'CUL', 'Club Deportivo Daigoro': 'DAI', 'Escola Judo Club': 'EJC',
+  'Encontro': 'ENC', 'Asociacion deportiva Famu De Frutos': 'FDF',
+  'Agrupacion Deportiva Judo Ferrolterra': 'FER', 'Judo Club Ximnasio Fibra': 'FIB',
+  'Forte Parque Sport': 'FPS', 'Judo Club Galicia Sur': 'GSU', 'Judo Baixo Mino': 'JBM',
+  'Judo Club Senin': 'JCS', 'JK': 'JK', 'AD Judo Muralla': 'JMU',
+  'Agrupacion Deportiva Liceo': 'LIC', 'Judo Lugo': 'LUG', 'Judo Club Lugokan': 'LUK',
+  'Lvcvs Dojo Club Deportivo': 'LVC', 'Agrupacion Deportiva Mamuro': 'MAM',
+  'Judo Club Oleiros': 'OLE', 'Orense Judo Club Marbel': 'ORE', 'Peleteiro': 'PEL',
+  'Judo Club Pontevedra': 'PON', 'Gimnasio Senra': 'SEN', 'Judo Club Shiai': 'SHI',
+  'Titan Combat Club Galicia': 'TIT', 'Judo Club Trasno': 'TRA', 'Terras de Santiago': 'TSA',
+};
+
+function exportarIJF(sexo) {
+  const catsElite = config.categorias.filter(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+  const sinPesos = catsElite.filter(c => !c.pesosM?.trim() || !c.pesosF?.trim());
+  if (sinPesos.length) { showToast('⚠️ Configura los pesos Elite primero'); return; }
+
+  let lista = participants.filter(p => p.modalidad === 'Elite');
+  if (sexo === 'Masculino') lista = lista.filter(p => (p.sexo||'').toLowerCase().includes('masc'));
+  if (sexo === 'Femenino')  lista = lista.filter(p => (p.sexo||'').toLowerCase().includes('fem'));
+
+  if (!lista.length) { showToast('⚠️ No hay participantes Elite' + (sexo !== 'ambos' ? ' ' + sexo : '')); return; }
+
+  const nombreEvento = 'torneo';
+  const txt = generarTXTijf(lista, nombreEvento);
+  const nombre = sexo === 'ambos' ? 'ijf_elite_todos' : `ijf_elite_${sexo.toLowerCase()}`;
+  const blob = new Blob([txt], { type: 'text/plain; charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre + '_names.txt';
+  a.click();
+  showToast(`✅ ${lista.length} participantes exportados`);
+}
+
+// ══════════════════════════════ ADMIN RENDER ══════════════════════════════
+function renderAdmin() {
+  const clubs = [...new Set(participants.map(p => p.club))].sort();
+  const turnos = [...new Set(participants.map(p => p.turno).filter(Boolean))].sort();
+  const cats = [...new Set(participants.map(p => p.categoria).filter(Boolean))].sort();
+
+  // Stats
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${participants.length}</div><div class="stat-label">Total</div></div>
+    <div class="stat-card"><div class="stat-num">${clubs.length}</div><div class="stat-label">Clubs</div></div>
+    ${turnos.map(t => `<div class="stat-card"><div class="stat-num">${participants.filter(p=>p.turno===t).length}</div><div class="stat-label">${t}</div></div>`).join('')}
+  `;
+
+  // Export grid
+  document.getElementById('export-grid').innerHTML = clubs.map(club => {
+    const n = participants.filter(p => p.club === club).length;
+    return `<button class="club-export-btn btn-export-club" onclick="exportClub('${club.replace(/'/g,"\\'")}')">${club} <span style="font-size:0.75rem;opacity:0.7;">(${n})</span></button>`;
+  }).join('');
+
+  // Filtros basados en Config, no en los datos del CSV
+  const filterCat = document.getElementById('filter-cat');
+  filterCat.innerHTML = '<option value="">Todas las categorías</option>' +
+    config.categorias.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+
+  const filterTurno = document.getElementById('filter-turno');
+  filterTurno.innerHTML = '<option value="">Todos los turnos</option>' +
+    config.turnos.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+
+  detectarDuplicados();
+  detectarIncongruencias();
+  filterTable();
+  renderCardIJF();
+}
+
+function detectarDuplicados() {
+  const vistos = {};
+  const duplicados = [];
+
+  participants.forEach(p => {
+    const clave = `${p.nombre.trim().toLowerCase()}|${p.club.trim().toLowerCase()}`;
+    if (!vistos[clave]) {
+      vistos[clave] = [p];
+    } else {
+      vistos[clave].push(p);
+    }
+  });
+
+  Object.values(vistos).forEach(grupo => {
+    if (grupo.length > 1) duplicados.push(grupo);
+  });
+
+  const contenedor = document.getElementById('duplicados-aviso');
+  if (!duplicados.length) {
+    window._duplicadosCodes = new Set();
+    contenedor.style.display = 'none';
+    return;
+  }
+
+  window._duplicadosCodes = new Set(duplicados.flatMap(g => g.map(p => p.code)));
+  contenedor.style.display = '';
+  contenedor.innerHTML = `
+    <strong>⚠️ ${duplicados.length} duplicado${duplicados.length>1?'s':''}</strong>
+    ${duplicados.map(grupo => `
+      <div style="background:rgba(0,0,0,0.2); border-radius:6px; padding:0.5rem 0.85rem; margin-top:0.4rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+        <span style="font-weight:600;">${grupo[0].nombre}</span>
+        <span style="color:var(--muted); font-size:0.8rem;">${grupo[0].club}</span>
+        <span style="font-size:0.8rem; color:#fbbf24;">${grupo.map(p => p.code).join(', ')}</span>
+      </div>`).join('')}`;
+}
+
+function detectarIncongruencias() {
+  const contenedor = document.getElementById('incongruencias-aviso');
+
+  // Solo actúa si hay al menos una categoría con años configurados
+  const catsConAnos = config.categorias.filter(c => c.anosValidos && c.anosValidos.trim());
+  if (!catsConAnos.length) { contenedor.style.display = 'none'; return; }
+
+  // Construir mapa categoria → Set de años válidos
+  const anosMap = {};
+  catsConAnos.forEach(c => {
+    const anos = c.anosValidos.split(',').map(s => s.trim()).filter(Boolean);
+    if (anos.length) anosMap[c.nombre] = new Set(anos);
+  });
+
+  // Detectar incongruencias: participante con fnac cuyo año no está en los válidos de su categoría
+  const incongruentes = participants.filter(p => {
+    const anosValidos = anosMap[p.categoria];
+    if (!anosValidos) return false; // categoría sin años configurados → no se valida
+    if (!p.fnac) return false;      // sin fecha de nacimiento → no se puede validar
+    const anoNac = extraerAno(p.fnac);
+    if (!anoNac) return false;      // fecha no parseable → no se valida
+    return !anosValidos.has(anoNac);
+  });
+
+  // Guardar en un Set global para uso en la tabla
+  window._incongruentesCodes = new Set(incongruentes.map(p => p.code));
+
+  if (!incongruentes.length) {
+    contenedor.style.display = 'none';
+    return;
+  }
+
+  contenedor.style.display = '';
+  contenedor.innerHTML = `
+    <strong>⚠️ ${incongruentes.length} año${incongruentes.length>1?'s':''} incorrecto${incongruentes.length>1?'s':''}</strong>
+    ${incongruentes.map(p => {
+      const anoNac = extraerAno(p.fnac) || '?';
+      const catConf = config.categorias.find(c => c.nombre === p.categoria);
+      const anosEsperados = catConf?.anosValidos || '—';
+      return `
+        <div style="background:rgba(0,0,0,0.2); border-radius:6px; padding:0.5rem 0.85rem; margin-top:0.4rem; display:flex; gap:1rem; flex-wrap:wrap; align-items:center;">
+          <span style="font-weight:600;">${p.nombre}</span>
+          <span style="color:var(--muted); font-size:0.8rem;">${p.club}</span>
+          <span style="font-size:0.8rem;">${p.categoria}</span>
+          <span style="font-size:0.8rem; color:#f87171;">Año: <strong>${anoNac}</strong> (válidos: ${anosEsperados})</span>
+        </div>`;
+    }).join('')}`;
+}
+
+function extraerAno(fnac) {
+  if (!fnac) return null;
+  // Formatos: DD/MM/AAAA, DD.MM.AAAA, AAAA-MM-DD, AAAA/MM/DD
+  const m1 = fnac.match(/^\d{1,2}[\/\.\-]\d{1,2}[\/\.\-](\d{4})$/);
+  if (m1) return m1[1];
+  const m2 = fnac.match(/^(\d{4})[\/\.\-]\d{1,2}[\/\.\-]\d{1,2}$/);
+  if (m2) return m2[1];
+  return null;
+}
+
+function filterTable() {
+  const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const cat = document.getElementById('filter-cat')?.value || '';
+  const turno = document.getElementById('filter-turno')?.value || '';
+  const filtered = participants.filter(p =>
+    (!q || p.nombre.toLowerCase().includes(q) || p.club.toLowerCase().includes(q)) &&
+    (!cat || p.categoria === cat) && (!turno || p.turno === turno)
+  );
+  document.getElementById('filter-count').textContent = `${filtered.length} participantes`;
+  document.getElementById('table-body').innerHTML = filtered.map(p => {
+    const esIncongruente = window._incongruentesCodes?.has(p.code);
+    const esDuplicado = window._duplicadosCodes?.has(p.code);
+    const categoriaCell = esIncongruente
+      ? `${p.categoria} <span class="incongruencia-badge" title="Año de nacimiento no coincide con esta categoría">⚠️ Año</span>`
+      : p.categoria;
+    const nombreCell = esDuplicado
+      ? `${p.nombre} <span class="incongruencia-badge" title="Participante duplicado">⚠️ Dup</span>`
+      : p.nombre;
+    return `
+    <tr id="row-${p.code}">
+      <td><code style="color:var(--gold);font-size:0.78rem;">${p.code}</code></td>
+      <td style="font-weight:600;">${nombreCell}</td>
+      <td>${p.club}</td>
+      <td style="font-size:0.78rem;color:var(--muted);">${p.fnac || '—'}</td>
+      <td>${categoriaCell}</td>
+      <td>${p.modalidad}</td>
+      <td>${p.sexo}</td>
+      <td>${p.turno}</td>
+      <td>${p.peso ? p.peso + ' kg' : '—'}</td>
+      <td style="display:flex;gap:0.4rem;">
+        <button class="btn btn-outline btn-sm" onclick="abrirEdicion('${p.code}')" title="Editar">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="eliminarParticipante('${p.code}')" title="Eliminar">✕</button>
+      </td>
+    </tr>
+    <tr id="edit-row-${p.code}" style="display:none; background:rgba(215,43,43,0.05);">
+      <td colspan="10" style="padding:0.75rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.5rem;">
+          <div><label>Nombre</label><input type="text" id="edit-nombre-${p.code}" value="${p.nombre.split(' ')[0]||''}" style="font-size:0.82rem;"></div>
+          <div><label>Apellidos</label><input type="text" id="edit-apellidos-${p.code}" value="${p.nombre.split(' ').slice(1).join(' ')||''}" style="font-size:0.82rem;"></div>
+          <div><label>Club</label><input type="text" id="edit-club-${p.code}" value="${p.club}" style="font-size:0.82rem;"></div>
+          <div><label>F. Nac.</label><input type="text" id="edit-fnac-${p.code}" value="${p.fnac||''}" placeholder="DD/MM/AAAA" style="font-size:0.82rem;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+          <div><label>Categoría</label>
+            <select id="edit-cat-${p.code}" style="font-size:0.82rem;">
+              ${config.categorias.map(c => '<option value="' + c.nombre + '" ' + (p.categoria===c.nombre?'selected':'') + '>' + c.nombre + '</option>').join('')}
+            </select>
+          </div>
+          <div><label>Modalidad</label>
+            <select id="edit-mod-${p.code}" style="font-size:0.82rem;">
+              <option value="Promoción" ${p.modalidad==='Promoción'?'selected':''}>Promoción</option>
+              <option value="Elite" ${p.modalidad==='Elite'?'selected':''}>Elite</option>
+            </select>
+          </div>
+          <div><label>Sexo</label>
+            <select id="edit-sexo-${p.code}" style="font-size:0.82rem;">
+              <option value="Masculino" ${p.sexo==='Masculino'?'selected':''}>Masculino</option>
+              <option value="Femenino" ${p.sexo==='Femenino'?'selected':''}>Femenino</option>
+            </select>
+          </div>
+          <div><label>Peso (kg)</label><input type="number" id="edit-peso-${p.code}" value="${p.peso||''}" min="5" max="150" step="0.1" style="font-size:0.82rem;"></div>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-gold btn-sm" onclick="guardarEdicion('${p.code}')">✅ Guardar</button>
+          <button class="btn btn-outline btn-sm" onclick="cancelarEdicion('${p.code}')">✕ Cancelar</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:2rem;">Sin resultados</td></tr>`;
+}
+
+function eliminarPorCodigo() {
+  const input = document.getElementById('input-eliminar');
+  const code = input.value.trim().toUpperCase();
+  const estado = document.getElementById('eliminar-estado');
+  if (!code) { estado.innerHTML = '<span style="color:var(--red)">⚠️ Introduce un código</span>'; return; }
+  const existe = participants.find(p => p.code === code);
+  if (!existe) { estado.innerHTML = `<span style="color:var(--red)">⚠️ Código ${code} no encontrado</span>`; return; }
+  eliminarParticipante(code);
+  input.value = '';
+  estado.innerHTML = `<span style="color:var(--green)">✅ ${existe.nombre} eliminado</span>`;
+}
+
+function eliminarParticipante(code) {
+  const p = participants.find(p => p.code === code);
+  if (!p) return;
+  participants = participants.filter(p => p.code !== code);
+  delete scanned[code];
+  renderAdmin();
+  buildTurnoFilters();
+  showToast(`🗑️ ${p.nombre} eliminado`);
+  guardarSesion();
+}
+
+// ══════════════════════════════ MANUAL ══════════════════════════════
+function renderManualCatSelect() {
+  const sel = document.getElementById('manual-categoria');
+  sel.innerHTML = '<option value="">-- Categoría --</option>' +
+    config.categorias.map(c => `<option value="${c.nombre}">${c.nombre} (${c.curso})</option>`).join('');
+}
+
+function onManualCatChange() {
+  const catNombre = document.getElementById('manual-categoria').value;
+  const catConf = config.categorias.find(c => c.nombre === catNombre);
+  const modSel = document.getElementById('manual-modalidad');
+  if (!catConf) return;
+  if (catConf.modalidad === 'solo-promo') { modSel.value = 'Promoción'; modSel.disabled = true; }
+  else if (catConf.modalidad === 'solo-elite') { modSel.value = 'Elite'; modSel.disabled = true; }
+  else { modSel.disabled = false; modSel.value = ''; }
+}
+
+function añadirManual() {
+  const nombre = document.getElementById('manual-nombre').value.trim();
+  const apellidos = (document.getElementById('manual-apellidos')?.value || '').trim();
+  const club = document.getElementById('manual-club').value.trim();
+  const fnac = (document.getElementById('manual-fnac')?.value || '').trim();
+  const categoria = document.getElementById('manual-categoria').value;
+  const modalidad = document.getElementById('manual-modalidad').value;
+  const sexo = document.getElementById('manual-sexo').value;
+  const peso = document.getElementById('manual-peso').value;
+  const estado = document.getElementById('manual-estado');
+  if (!nombre) { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta el nombre</span>'; return; }
+  if (!club)   { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta el club</span>'; return; }
+  if (!categoria) { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta la categoría</span>'; return; }
+  if (!modalidad) { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta la modalidad</span>'; return; }
+  if (!sexo)   { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta el sexo</span>'; return; }
+  if (!peso)   { estado.innerHTML = '<span style="color:var(--red)">⚠️ Falta el peso</span>'; return; }
+
+  const catConf = config.categorias.find(c => c.nombre === categoria);
+  const turnoNombre = catConf ? (config.turnos[catConf.turnoId - 1]?.nombre || '') : '';
+  const nombreCompleto = [nombre, apellidos].filter(Boolean).join(' ');
+
+  participants.push({
+    id: participants.length + 1,
+    code: 'JUDOBASE' + String(codeCounter++).padStart(4, '0'),
+    nombre: nombreCompleto, club, fnac, categoria, modalidad, sexo, turno: turnoNombre, tatami: '', peso,
+  });
+
+  ['manual-nombre','manual-apellidos','manual-club','manual-fnac','manual-peso'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('manual-categoria').value = '';
+  document.getElementById('manual-modalidad').value = '';
+  document.getElementById('manual-modalidad').disabled = false;
+  document.getElementById('manual-sexo').value = '';
+  estado.innerHTML = `<span style="color:var(--green)">✅ ${nombreCompleto} añadido · Total: ${participants.length}</span>`;
+  document.getElementById('admin-content').style.display = '';
+  document.getElementById('btn-quitar-wrap').style.display = '';
+  renderAdmin();
+  buildTurnoFilters();
+  guardarSesion();
+}
+
+function abrirEdicion(code) {
+  document.querySelectorAll('[id^="edit-row-"]').forEach(r => r.style.display = 'none');
+  const row = document.getElementById(`edit-row-${code}`);
+  if (row) { row.style.display = ''; row.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+}
+
+function cancelarEdicion(code) {
+  const row = document.getElementById(`edit-row-${code}`);
+  if (row) row.style.display = 'none';
+}
+
+function guardarEdicion(code) {
+  const p = participants.find(p => p.code === code);
+  if (!p) return;
+  const nombre = (document.getElementById(`edit-nombre-${code}`)?.value || '').trim();
+  const apellidos = (document.getElementById(`edit-apellidos-${code}`)?.value || '').trim();
+  const club = (document.getElementById(`edit-club-${code}`)?.value || '').trim();
+  const fnac = (document.getElementById(`edit-fnac-${code}`)?.value || '').trim();
+  const cat = document.getElementById(`edit-cat-${code}`)?.value || '';
+  const mod = document.getElementById(`edit-mod-${code}`)?.value || '';
+  const sexo = document.getElementById(`edit-sexo-${code}`)?.value || '';
+  const peso = parseFloat(document.getElementById(`edit-peso-${code}`)?.value) || 0;
+  if (!nombre && !apellidos) { showToast('⚠️ El nombre no puede estar vacío'); return; }
+  const catConf = config.categorias.find(c => c.nombre === cat);
+  p.nombre = [nombre, apellidos].filter(Boolean).join(' ');
+  p.club = club; p.fnac = fnac; p.categoria = cat; p.modalidad = mod;
+  p.sexo = sexo; p.peso = peso;
+  p.turno = catConf ? (config.turnos[catConf.turnoId - 1]?.nombre || '') : p.turno;
+  cancelarEdicion(code);
+  renderAdmin();
+  buildTurnoFilters();
+  guardarSesion();
+  showToast(`✅ ${p.nombre} actualizado`);
+}
+
+// ══════════════════════════════ ESTADO BOTONES ══════════════════════════════
+function tatamiDistribuidos() {
+  return participants.length > 0 && participants.some(p => p.tatami);
+}
+
+function actualizarEstadoBotones() {
+  const dist = tatamiDistribuidos();
+  const hayParticipantes = participants.length > 0;
+  // Botón exportar todos
+  const btnTodos = document.querySelector('#card-export-qr .btn-gold');
+  const avisoQR = document.getElementById('tatamis-warning');
+  if (btnTodos) {
+    btnTodos.disabled = !dist;
+    btnTodos.style.opacity = dist ? '' : '0.4';
+    btnTodos.style.cursor = dist ? '' : 'not-allowed';
+  }
+  if (avisoQR) avisoQR.style.display = (hayParticipantes && !dist) ? '' : 'none';
+  // Botones de club individuales — bloqueados hasta distribuir
+  document.querySelectorAll('.btn-export-club').forEach(b => {
+    b.disabled = !dist;
+    b.style.opacity = dist ? '' : '0.4';
+    b.style.cursor = dist ? '' : 'not-allowed';
+    b.title = dist ? '' : 'Distribuye los tatamis primero';
+  });
+  // Tab Escaneo
+  const tabScanner = document.querySelector('[onclick*="scanner"]');
+  if (tabScanner) {
+    tabScanner.style.opacity = dist ? '' : '0.4';
+    tabScanner.style.pointerEvents = dist ? '' : 'none';
+    tabScanner.title = dist ? '' : 'Primero distribuye los participantes en tatamis';
+  }
+}
+
+// ══════════════════════════════ QR EXPORT ══════════════════════════════
+function generateQR(text) {
+  return new Promise(resolve => {
+    const div = document.createElement('div');
+    document.getElementById('qr-hidden').appendChild(div);
+    new QRCode(div, { text, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+    // Usar requestAnimationFrame para no bloquear el hilo principal
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const canvas = div.querySelector('canvas');
+        const img = div.querySelector('img');
+        const src = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
+        div.remove();
+        resolve(src);
+      });
+    });
+  });
+}
+
+// Generar QRs en lotes paralelos para máxima velocidad
+async function generateQRBatch(participants, onProgress) {
+  const BATCH_SIZE = 20;
+  const results = {};
+  let done = 0;
+  for (let i = 0; i < participants.length; i += BATCH_SIZE) {
+    const batch = participants.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(batch.map(p => generateQR(p.code).then(src => ({ code: p.code, src }))));
+    batchResults.forEach(r => { results[r.code] = r.src; done++; });
+    if (onProgress) onProgress(done, participants.length);
+  }
+  return results;
+}
+
+
+// ══════════════════════════════ EXPORT ZIP ══════════════════════════════
+async function exportarZipTodosClubs() {
+  if (!horasConfiguradas()) {
+    document.getElementById('horas-warning').style.display = '';
+    showToast('⚠️ Configura las horas primero'); return;
+  }
+  if (!participants.length) { showToast('⚠️ Carga participantes primero'); return; }
+
+  const btn = document.getElementById('btn-export-zip');
+  const progreso = document.getElementById('zip-progreso');
+  btn.disabled = true; btn.style.opacity = '0.5';
+  progreso.style.display = '';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const zip = new JSZip();
+    const clubs = [...new Set(participants.map(p => p.club))].sort();
+    const total = participants.length;
+
+    progreso.textContent = 'Generando QRs… (0 / ' + total + ')';
+
+    // Generar todos los QRs de una vez
+    const qrMap = await generateQRBatch(participants, function(done, tot) {
+      progreso.textContent = 'Generando QRs… (' + done + ' / ' + tot + ')';
+    });
+
+    progreso.textContent = 'Creando PDFs por club…';
+
+    for (let ci = 0; ci < clubs.length; ci++) {
+      const club = clubs[ci];
+      const members = participants.filter(p => p.club === club);
+      if (!members.length) continue;
+
+      progreso.textContent = 'PDF ' + (ci+1) + ' / ' + clubs.length + ' — ' + club;
+
+      // Crear PDF A4 apaisado con 2 tarjetas por fila
+      // Tarjeta: 105mm x 74mm, 2 por fila en A4 (210mm ancho)
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = 210, pageH = 297;
+      const cardW = 100, cardH = 70;
+      const marginX = 5, marginY = 5;
+      const cols = 2, rows = 4;
+      const perPage = cols * rows;
+
+      // Cabecera del club en primera página
+      let pageNum = 0;
+      let cardIdx = 0;
+
+      for (let mi = 0; mi < members.length; mi++) {
+        const p = members[mi];
+        const posInPage = cardIdx % perPage;
+
+        if (posInPage === 0) {
+          if (cardIdx > 0) doc.addPage();
+          pageNum++;
+          // Cabecera
+          doc.setFillColor(192, 57, 43);
+          doc.rect(0, 0, pageW, 10, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(club.toUpperCase(), 5, 7);
+          doc.setTextColor(0, 0, 0);
+        }
+
+        const col = posInPage % cols;
+        const row = Math.floor(posInPage / cols);
+        const x = marginX + col * (cardW + 2);
+        const y = 12 + row * (cardH + 2);
+
+        // Borde tarjeta
+        doc.setDrawColor(80, 80, 80);
+        doc.setLineWidth(0.4);
+        doc.rect(x, y, cardW, cardH);
+
+        // QR
+        const qrSrc = qrMap[p.code];
+        if (qrSrc) {
+          try { doc.addImage(qrSrc, 'PNG', x + 2, y + 2, 28, 28); } catch(e) {}
+        }
+
+        // Texto
+        const tx = x + 32;
+        let ty = y + 7;
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(184, 134, 11);
+        doc.text(p.code, tx, ty); ty += 5;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        const nombreLines = doc.splitTextToSize(p.nombre, cardW - 34);
+        doc.text(nombreLines, tx, ty); ty += nombreLines.length * 4.5;
+
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(80, 80, 80);
+        const catLine = p.categoria + (p.modalidad ? ' · ' + p.modalidad : '') + (p.sexo ? ' · ' + p.sexo : '');
+        doc.text(doc.splitTextToSize(catLine, cardW - 34), tx, ty); ty += 5;
+
+        if (p.peso) { doc.text('Peso: ' + p.peso + ' kg', tx, ty); ty += 4.5; }
+
+        // Turno e hora
+        const infoTurno = getInfoTurno(p.turno);
+        if (infoTurno) {
+          doc.setTextColor(192, 57, 43);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.text(doc.splitTextToSize(infoTurno, cardW - 34), tx, ty); ty += 5;
+        }
+
+        // Tatami
+        if (p.tatami) {
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(192, 57, 43);
+          doc.text(p.tatami, tx, ty); ty += 5;
+        }
+
+        // Club abajo
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(50, 50, 50);
+        doc.text(doc.splitTextToSize(p.club, cardW - 34), x + 2, y + cardH - 4);
+
+        cardIdx++;
+      }
+
+      // Guardar PDF en ZIP
+      const pdfBytes = doc.output('arraybuffer');
+      const safeName = 'QRs - ' + club.replace(/[/\?%*:|"<>]/g, '-') + '.pdf';
+      zip.file(safeName, pdfBytes);
+    }
+
+    progreso.textContent = 'Comprimiendo ZIP…';
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(zipBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'QRs_JudoBase_' + new Date().toISOString().slice(0, 10) + '.zip';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    progreso.textContent = '✅ ZIP descargado — ' + clubs.length + ' PDFs listos para enviar';
+    showToast('✅ ZIP con ' + clubs.length + ' PDFs descargado');
+  } catch(e) {
+    console.error(e);
+    progreso.textContent = '❌ Error: ' + e.message;
+    showToast('❌ Error al generar ZIP');
+  } finally {
+    btn.disabled = false; btn.style.opacity = '';
+  }
+}
+
+async function exportClub(club) {
+  if (!horasConfiguradas()) {
+    document.getElementById('horas-warning').style.display = '';
+    showToast('⚠️ Configura las horas primero'); return;
+  }
+  const members = participants.filter(p => p.club === club);
+  if (!members.length) return;
+
+  const win = window.open('', '_blank');
+  if (!win) { showToast('⚠️ El navegador bloqueó la ventana — permite ventanas emergentes.'); return; }
+
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+    'body{font-family:Arial,sans-serif;margin:0;background:#f5f5f5;}' +
+    '.cargando{text-align:center;padding:40px;font-size:16pt;color:#c0392b;font-weight:bold;}' +
+    '.progreso{text-align:center;padding:10px;font-size:11pt;color:#666;}' +
+    '.pagina-club{background:#fff;}' +
+    '.club-header{background:#c0392b;color:white;padding:4mm 8mm;font-size:13pt;font-weight:bold;letter-spacing:1px;}' +
+    '.sheet{display:flex;flex-wrap:wrap;width:210mm;}' +
+    '.card{width:105mm;height:74mm;border:1.5px solid #333;padding:6mm 8mm;display:flex;align-items:center;gap:5mm;box-sizing:border-box;}' +
+    '.qr-img{width:52mm;height:52mm;flex-shrink:0;}' +
+    '.info{flex:1;min-width:0;}' +
+    '.code{font-size:10pt;font-weight:bold;color:#B8860B;letter-spacing:0.1em;margin-bottom:2mm;}' +
+    '.name{font-size:12pt;font-weight:bold;line-height:1.2;margin-bottom:2mm;word-break:break-word;}' +
+    '.dato{font-size:8.5pt;color:#555;margin-bottom:1mm;}' +
+    '.turno-info{font-size:8pt;color:#c0392b;font-weight:bold;margin-bottom:1mm;line-height:1.3;}' +
+    '.club-name{font-size:9pt;font-weight:bold;color:#333;margin-top:1.5mm;}' +
+    '@media print{@page{margin:5mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.cargando,.progreso{display:none;}}' +
+    '</style></head><body>' +
+    '<div class="cargando" id="msg-cargando">⏳ Generando QRs… <span style="font-size:10pt;">⚠️ No cambies de pestaña</span></div>' +
+    '<div class="progreso" id="msg-progreso">0 / ' + members.length + ' QRs generados…</div>' +
+    '<div id="contenido"></div>' +
+    '</body></html>');
+  win.document.close();
+
+  const qrMap = await generateQRBatch(members, function(done, total) {
+    try { win.document.getElementById('msg-progreso').textContent = done + ' / ' + total + ' QRs generados…'; } catch(e) {}
+  });
+
+  let body = '<div class="pagina-club"><div class="club-header">' + club + '</div><div class="sheet">';
+  members.forEach(function(p) {
+    const qrSrc = qrMap[p.code] || '';
+    body += '<div class="card">' +
+      '<img class="qr-img" src="' + qrSrc + '" alt="' + p.code + '">' +
+      '<div class="info">' +
+        '<div class="code">' + p.code + '</div>' +
+        '<div class="name">' + p.nombre + '</div>' +
+        '<div class="dato">' + p.categoria + (p.modalidad?' · '+p.modalidad:'') + (p.sexo?' · '+p.sexo:'') + '</div>' +
+        (p.peso ? '<div class="dato">Peso: ' + p.peso + ' kg</div>' : '') +
+        '<div class="turno-info">' + getInfoTurno(p.turno) + '</div>' +
+        (p.tatami ? '<div class="dato" style="font-weight:bold;color:#c0392b;">' + p.tatami + '</div>' : '') +
+        '<div class="club-name">' + p.club + '</div>' +
+      '</div></div>';
+  });
+  body += '</div></div>';
+
+  try {
+    win.document.getElementById('contenido').innerHTML = body;
+    win.document.getElementById('msg-cargando').style.display = 'none';
+    win.document.getElementById('msg-progreso').textContent = '✅ ' + members.length + ' QRs generados — usa Ctrl+P para imprimir';
+  } catch(e) {}
+  setTimeout(function() { win.print(); }, 600);
+  showToast('✅ ' + members.length + ' tarjetas para ' + club);
+}
+
+async function exportAllClubs() {
+  if (!horasConfiguradas()) {
+    document.getElementById('horas-warning').style.display = '';
+    showToast('⚠️ Configura las horas primero'); return;
+  }
+  const clubs = [...new Set(participants.map(p => p.club))];
+
+  // Abrir ventana ANTES de generar para evitar bloqueo del navegador
+  const win = window.open('', '_blank');
+  if (!win) { showToast('⚠️ El navegador bloqueó la ventana — permite ventanas emergentes e inténtalo de nuevo.'); return; }
+
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;margin:0;background:#f5f5f5;}
+    .cargando{text-align:center;padding:40px;font-size:16pt;color:#c0392b;font-weight:bold;}
+    .progreso{text-align:center;padding:10px;font-size:11pt;color:#666;}
+    .pagina-club{page-break-before:always;background:#fff;}
+    .pagina-club:first-child{page-break-before:avoid;}
+    .club-header{background:#c0392b;color:white;padding:4mm 8mm;font-size:13pt;font-weight:bold;letter-spacing:1px;}
+    .sheet{display:flex;flex-wrap:wrap;width:210mm;}
+    .card{width:105mm;height:74mm;border:1.5px solid #333;padding:6mm 8mm;display:flex;align-items:center;gap:5mm;box-sizing:border-box;}
+    .qr-img{width:52mm;height:52mm;flex-shrink:0;}
+    .info{flex:1;min-width:0;}
+    .code{font-size:10pt;font-weight:bold;color:#B8860B;letter-spacing:0.1em;margin-bottom:2mm;}
+    .name{font-size:11pt;font-weight:bold;line-height:1.2;margin-bottom:2mm;word-break:break-word;}
+    .dato{font-size:8.5pt;color:#555;margin-bottom:1mm;}
+    .turno-info{font-size:8pt;color:#c0392b;font-weight:bold;margin-bottom:1mm;line-height:1.3;}
+    .club-name{font-size:9pt;font-weight:bold;color:#333;margin-top:1.5mm;}
+    @media print{@page{margin:5mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}.cargando,.progreso{display:none;}}
+  </style></head><body>
+    <div class="cargando" id="msg-cargando">⏳ Generando QRs… <span style="font-size:10pt;color:#c0392b;">⚠️ No cambies de pestaña o se pausará la generación</span></div>
+    <div class="progreso" id="msg-progreso">0 / ${participants.length} participantes</div>
+    <div id="contenido"></div>
+  </body></html>`);
+  win.document.close();
+
+  const total = participants.length;
+  try { win.document.getElementById('msg-progreso').textContent = `Generando ${total} QRs en paralelo…`; } catch(e) {}
+
+  // Generar todos los QRs en lotes paralelos
+  const qrMap = await generateQRBatch(participants, function(done, total) {
+    try { win.document.getElementById('msg-progreso').textContent = done + ' / ' + total + ' QRs generados…'; } catch(e) {}
+  });
+  try { win.document.getElementById('msg-progreso').textContent = `QRs generados — montando hojas…`; } catch(e) {}
+
+  let body = '';
+  for (const club of clubs) {
+    const members = participants.filter(p => p.club === club);
+    if (!members.length) continue;
+    body += `<div class="pagina-club"><div class="club-header">${club}</div><div class="sheet">`;
+    for (const p of members) {
+      const qrSrc = qrMap[p.code] || '';
+      body += `<div class="card">
+        <img class="qr-img" src="${qrSrc}" alt="${p.code}">
+        <div class="info">
+          <div class="code">${p.code}</div>
+          <div class="name">${p.nombre}</div>
+          <div class="dato">${p.categoria}${p.modalidad?' · '+p.modalidad:''}${p.sexo?' · '+p.sexo:''}</div>
+          ${p.peso?`<div class="dato">Peso: ${p.peso} kg</div>`:''}
+          <div class="turno-info">${getInfoTurno(p.turno)}</div>
+          ${p.tatami?`<div class="dato" style="font-weight:bold;color:#c0392b;">${p.tatami}</div>`:''}
+          <div class="club-name">${p.club}</div>
+        </div>
+      </div>`;
+    }
+    body += `</div></div>`;
+  }
+
+  try {
+    win.document.getElementById('contenido').innerHTML = body;
+    win.document.getElementById('msg-cargando').style.display = 'none';
+    win.document.getElementById('msg-progreso').textContent = `✅ ${total} QRs generados — usa Ctrl+P para imprimir o guardar como PDF`;
+  } catch(e) {}
+  showToast('✅ QRs generados para todos los clubs');
+}
+
+async function generarHTMLClubs(grupos, winRef) {
+  const css = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    body{font-family:Arial,sans-serif;margin:0;}
+    .pagina-club{page-break-before:always;}
+    .pagina-club:first-child{page-break-before:avoid;}
+    .club-header{background:#c0392b;color:white;padding:4mm 8mm;font-size:13pt;font-weight:bold;letter-spacing:1px;}
+    .sheet{display:flex;flex-wrap:wrap;width:210mm;}
+    .card{width:105mm;height:74mm;border:1.5px solid #333;padding:6mm 8mm;display:flex;align-items:center;gap:5mm;box-sizing:border-box;}
+    .qr-img{width:52mm;height:52mm;flex-shrink:0;}
+    .info{flex:1;min-width:0;}
+    .code{font-size:10pt;font-weight:bold;color:#B8860B;letter-spacing:0.1em;margin-bottom:2mm;}
+    .name{font-size:12pt;font-weight:bold;line-height:1.2;margin-bottom:2mm;word-break:break-word;}
+    .dato{font-size:8.5pt;color:#555;margin-bottom:1mm;}
+    .turno-info{font-size:8pt;color:#c0392b;font-weight:bold;margin-bottom:1mm;line-height:1.3;}
+    .club-name{font-size:9pt;font-weight:bold;color:#333;margin-top:1.5mm;}
+    @media print{@page{margin:5mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  </style></head><body>`;
+
+  // Recopilar todos los participantes para generar en lotes
+  const allMembers = grupos.flatMap(g => g.members);
+  const total = allMembers.length;
+  const qrMap = await generateQRBatch(allMembers, function(done, total) {
+    try { if(winRef) winRef.document.getElementById('msg-progreso').textContent = done + ' / ' + total + ' QRs generados…'; } catch(e) {}
+  });
+
+  let body = '';
+  for (const { club, members } of grupos) {
+    body += `<div class="pagina-club"><div class="club-header">${club}</div><div class="sheet">`;
+    for (const p of members) {
+      const qrSrc = qrMap[p.code] || '';
+      body += `<div class="card">
+        <img class="qr-img" src="${qrSrc}" alt="${p.code}">
+        <div class="info">
+          <div class="code">${p.code}</div>
+          <div class="name">${p.nombre}</div>
+          <div class="dato">${p.categoria}${p.modalidad ? ' · ' + p.modalidad : ''}${p.sexo ? ' · ' + p.sexo : ''}</div>
+          ${p.peso ? `<div class="dato">Peso: ${p.peso} kg</div>` : ''}
+          <div class="turno-info">${getInfoTurno(p.turno)}</div>
+          ${p.tatami ? `<div class="dato" style="font-weight:bold;color:#c0392b;">${p.tatami}</div>` : ''}
+          <div class="club-name">${p.club}</div>
+        </div>
+      </div>`;
+    }
+    body += `</div></div>`;
+  }
+  return css + body + `</body></html>`;
+}
+
+// ══════════════════════════════ TATAMIS ══════════════════════════════
+function renderTatamisConfig() {
+  renderPesosTatami();
+  const c = document.getElementById('tatamis-por-turno');
+  const aviso = document.getElementById('tatamis-aviso');
+
+  if (!configGuardada) {
+    aviso.style.display = '';
+    c.innerHTML = '';
+    document.getElementById('btn-calcular-tatamis').style.display = 'none';
+    return;
+  }
+
+  aviso.style.display = 'none';
+  document.getElementById('btn-calcular-tatamis').style.display = '';
+  c.innerHTML = config.turnos.map((t, i) => `
+    <div>
+      <label>${t.nombre}</label>
+      <input type="number" id="tatamis-t${i}" value="10" min="1" max="20" style="width:80px;text-align:center;">
+    </div>`).join('');
+}
+
+function calcularTatamis() {
+  if (!configGuardada) {
+    showToast('⚠️ Guarda la configuración primero en ⚙️ Config');
+    return;
+  }
+  if (!participants.length) { showToast('⚠️ Carga participantes primero en 📋 Listado'); return; }
+
+  // Validar que el número de tatamis de cada turno cubre las reservas
+  const errores = [];
+  config.turnos.forEach((turno, ti) => {
+    const nTatamis = parseInt(document.getElementById(`tatamis-t${ti}`)?.value) || 10;
+    const reservasTurno = config.reservas.filter(r => {
+      if (!r.categoria || !r.tatamis) return false;
+      const cat = config.categorias.find(c => c.nombre === r.categoria);
+      return cat && config.turnos[cat.turnoId - 1]?.nombre === turno.nombre;
+    });
+    reservasTurno.forEach(r => {
+      const nums = r.tatamis.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+      const maxTatami = Math.max(...nums);
+      if (maxTatami > nTatamis) {
+        errores.push(`${turno.nombre}: la reserva de "${r.categoria}" usa el Tatami ${maxTatami} pero solo hay ${nTatamis} tatamis configurados`);
+      }
+    });
+  });
+
+  if (errores.length) {
+    showToast('⚠️ Hay conflictos con las reservas — revisa la configuración');
+    const avisoEl = document.getElementById('tatamis-aviso-reservas');
+    avisoEl.style.display = '';
+    avisoEl.innerHTML = '<strong>⚠️ No se puede calcular la distribución:</strong>' +
+      '<ul style="margin-top:0.5rem;padding-left:1.2rem;line-height:1.8;">' +
+      errores.map(e => '<li>' + e + '</li>').join('') +
+      '</ul>';
+    return;
+  }
+  document.getElementById('tatamis-aviso-reservas').style.display = 'none';
+
+  const resultado = document.getElementById('tatamis-resultado');
+  resultado.innerHTML = '';
+  distribucionTatamis = {};
+
+  config.turnos.forEach((turno, ti) => {
+    const nTatamis = parseInt(document.getElementById(`tatamis-t${ti}`)?.value) || 10;
+    const lista = participants.filter(p => p.turno === turno.nombre);
+    const dist = calcularDistribucionTurno(lista, nTatamis, turno.nombre);
+    distribucionTatamis[ti + 1] = dist;
+
+    const catsTurno = config.categorias.filter(c => c.turnoId === ti + 1);
+    const tieneElite = catsTurno.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+
+    const block = document.createElement('div');
+    block.className = 'turno-block';
+    block.innerHTML = `
+      <div class="turno-block-title">
+        ${turno.nombre} — ${catsTurno.map(c => c.nombre).join(' · ')}
+        ${tieneElite ? '<span style="font-size:0.75rem;background:rgba(215,43,43,0.2);padding:2px 8px;border-radius:4px;margin-left:8px;">ELITE + PROMOCIÓN</span>' : ''}
+      </div>
+      <div class="tatami-grid" id="grid-t${ti+1}"></div>
+      <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="exportarListadoTatami(${ti+1})">⬇️ Exportar listado ${turno.nombre}</button>
+        <button class="btn btn-outline btn-sm" onclick="exportarPresentesTatami(${ti+1})">✅ Exportar presentes ${turno.nombre}</button>
+      </div>`;
+    resultado.appendChild(block);
+    // Escribir tatami en cada participante
+    dist.forEach(grupo => {
+      grupo.participantes.forEach(p => { p.tatami = grupo.label; });
+    });
+    renderTatamiGrid(dist, `grid-t${ti+1}`);
+  });
+
+  resultado.style.display = '';
+  // Añadir botón deshacer distribución
+  const btnDeshacer = document.createElement('div');
+  btnDeshacer.style.cssText = 'margin-top:1rem;';
+  btnDeshacer.innerHTML = '<button class="btn btn-outline" onclick="deshacerDistribucion()">↩️ Deshacer distribución y editar pesos</button>';
+  resultado.appendChild(btnDeshacer);
+
+  guardarSesion();
+  actualizarEstadoBotones();
+  showToast('✅ Distribución calculada — ya puedes generar los QRs');
+}
+
+function deshacerDistribucion() {
+  // Limpiar tatami de todos los participantes
+  participants.forEach(function(p) { p.tatami = ''; });
+  distribucionTatamis = {};
+  const resultado = document.getElementById('tatamis-resultado');
+  resultado.innerHTML = '';
+  resultado.style.display = 'none';
+  actualizarEstadoBotones();
+  guardarSesion();
+  showToast('↩️ Distribución deshecha — edita los pesos y recalcula');
+}
+
+function calcularDistribucionTurno(lista, nTatamis, turnoNombre) {
+  // Solo reservas de categorías de ESTE turno
+  const reservas = config.reservas.filter(r => {
+    if (!r.categoria) return false;
+    const cat = config.categorias.find(c => c.nombre === r.categoria);
+    if (!cat) return false;
+    const turnoIdx = cat.turnoId - 1;
+    return config.turnos[turnoIdx]?.nombre === turnoNombre;
+  });
+  const tatamisReservados = new Set();
+  const grupos = [];
+
+  reservas.forEach(r => {
+    const nums = r.tatamis.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+    nums.forEach(n => tatamisReservados.add(n));
+
+    const cat = config.categorias.find(c => c.nombre === r.categoria);
+    const esElite = cat && (cat.modalidad === 'ambas' || cat.modalidad === 'solo-elite') &&
+                    (r.modalidad === 'Elite' || !r.modalidad);
+    const key = r.categoria + '|' + r.tatamis;
+    const pesosPorTatamiConf = esElite && config.pesosPorTatami?.[key];
+    const tieneConfigPesos = pesosPorTatamiConf && Object.values(pesosPorTatamiConf).some(arr => arr && arr.length);
+
+    if (esElite && tieneConfigPesos) {
+      // Distribuir Elite por tatami según config de pesos
+      nums.forEach(tn => {
+        const asignados = pesosPorTatamiConf[tn] || [];
+        if (!asignados.length) return;
+        const miembros = [];
+        asignados.forEach(a => {
+          const pesosStr = a.sexo === 'M' ? (cat.pesosM || '') : (cat.pesosF || '');
+          const sexoFiltro = a.sexo === 'M' ? 'masc' : 'fem';
+          const delPeso = lista.filter(p =>
+            p.categoria === r.categoria && p.modalidad === 'Elite' &&
+            (p.sexo || '').toLowerCase().includes(sexoFiltro) &&
+            asignarPesoElite(parseFloat(p.peso)||0, pesosStr) === a.peso
+          );
+          miembros.push(...delPeso);
+        });
+        if (!miembros.length) return;
+        miembros.sort((a,b) => (parseFloat(a.peso)||0)-(parseFloat(b.peso)||0));
+        const pesosLabel = asignados.map(a => (a.sexo==='M'?'♂':'♀') + a.peso).join(' · ');
+        grupos.push({ label: 'Tatami ' + tn, num: tn, tipo: r.categoria + ' Elite — ' + pesosLabel, participantes: miembros });
+      });
+      // Añadir Promoción de esta categoría si la reserva no es exclusiva Elite
+      if (!r.modalidad || r.modalidad === '') {
+        const promo = lista.filter(p => p.categoria === r.categoria && p.modalidad === 'Promoción');
+        if (promo.length) {
+          // La promo va a tatamis libres, no aquí
+        }
+      }
+    } else {
+      // Reserva normal: todos juntos
+      let miembros = lista.filter(p => p.categoria === r.categoria);
+      if (r.modalidad) miembros = miembros.filter(p => p.modalidad === r.modalidad);
+      if (!miembros.length) return;
+      miembros = miembros.sort((a,b) => (parseFloat(a.peso)||0) - (parseFloat(b.peso)||0));
+      grupos.push({ label: 'Tatami ' + nums.join('/'), num: nums[0], tipo: r.categoria + (r.modalidad ? ' · ' + r.modalidad : ''), participantes: miembros });
+    }
+  });
+
+  // Tatamis libres
+  const tatamisLibres = [];
+  for (let i = 1; i <= nTatamis; i++) { if (!tatamisReservados.has(i)) tatamisLibres.push(i); }
+
+  // Categorías sin reserva del turno
+  const catsReservadas = new Set(reservas.map(r => r.categoria));
+  // Categorías y modalidades ya cubiertas por reservas
+  const reservasCubiertas = reservas.filter(r => r.categoria).map(r => `${r.categoria}|${r.modalidad||''}`);
+
+  const catsTurno = config.categorias.filter(c => {
+    const turnoIdx = c.turnoId - 1;
+    return config.turnos[turnoIdx]?.nombre === turnoNombre && !catsReservadas.has(c.nombre);
+  });
+
+  // Elite y Promoción separados
+  const catsElite = catsTurno.filter(c => c.modalidad === 'solo-elite' || c.modalidad === 'ambas');
+  const catsPromo = catsTurno.filter(c => c.modalidad === 'solo-promo' || c.modalidad === 'ambas');
+
+  const tatamisPromo = tatamisLibres;
+
+  if (false) { // Elite siempre va via reservas obligatorias — bloque desactivado
+
+
+
+  }
+
+  // Promoción: ordenado por peso, proporcional por categoría
+  if (tatamisPromo.length) {
+    // Excluir participantes ya asignados via reserva
+    const yaAsignados = new Set(grupos.flatMap(g => g.participantes.map(p => p.code)));
+    const promoTotal = lista.filter(p => {
+      if (yaAsignados.has(p.code)) return false;
+      const catConf = config.categorias.find(c => c.nombre === p.categoria);
+      return catConf && (catConf.modalidad === 'solo-promo' || p.modalidad === 'Promoción');
+    });
+
+    // Agrupar por categoría y distribuir proporcionalmente
+    const catsSinReservaPromo = [...new Set(promoTotal.map(p=>p.categoria))];
+    const totalPromo = promoTotal.length;
+    if (totalPromo && catsSinReservaPromo.length) {
+      let tatIdx = 0;
+      catsSinReservaPromo.forEach((catNombre, ci) => {
+        const deCat = promoTotal.filter(p=>p.categoria===catNombre).sort((a,b)=>(parseFloat(a.peso)||0)-(parseFloat(b.peso)||0));
+        const proporcion = deCat.length / totalPromo;
+        const nParaEsta = ci === catsSinReservaPromo.length - 1
+          ? tatamisPromo.length - tatIdx
+          : Math.max(1, Math.round(proporcion * tatamisPromo.length));
+        const sliceTatamis = tatamisPromo.slice(tatIdx, tatIdx + nParaEsta);
+        if (sliceTatamis.length) distribuirEnNTatamis(deCat, sliceTatamis).forEach(g=>grupos.push({...g, tipo:`Promoción · ${catNombre}`}));
+        tatIdx += nParaEsta;
+      });
+    }
+  }
+
+  return grupos.sort((a,b) => a.num - b.num);
+}
+
+function distribuirEnNTatamis(lista, tatamisNums) {
+  if (!lista.length || !tatamisNums.length) return [];
+  const n = tatamisNums.length;
+  const porTatami = Math.ceil(lista.length / n);
+  return tatamisNums.map((num, i) => {
+    const inicio = i * porTatami;
+    const fin = Math.min(inicio + porTatami, lista.length);
+    const grupo = lista.slice(inicio, fin);
+    // Regla: mismo club + mismo peso en el corte → separar
+    if (i < n - 1 && grupo.length) {
+      const ultimo = grupo[grupo.length - 1];
+      const sig = lista[fin];
+      if (sig && parseFloat(ultimo.peso) === parseFloat(sig.peso) && ultimo.club === sig.club) {
+        grupo[grupo.length - 1] = sig;
+        lista[fin] = ultimo;
+      }
+    }
+    return { num, label: `Tatami ${num}`, participantes: grupo };
+  }).filter(g => g.participantes.length);
+}
+
+function renderTatamiGrid(dist, gridId) {
+  const grid = document.getElementById(gridId);
+  if (!dist || !dist.length) { grid.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:1rem;">Sin participantes.</p>'; return; }
+  grid.innerHTML = dist.map(t => `
+    <div class="tatami-card">
+      <div class="tatami-card-header">
+        <span class="tatami-card-title">${t.label}</span>
+        <span class="tatami-card-meta" style="${t.tipo?.includes('Elite')?'color:var(--gold)':'color:var(--muted)'}">${t.tipo || ''} · ${t.participantes.length}</span>
+      </div>
+      <div class="tatami-card-body">
+        ${t.participantes.map((p,i) => `
+          <div class="tatami-row">
+            <span>${i+1}. ${p.nombre}</span>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <span style="font-size:0.72rem;color:var(--muted)">${p.club}</span>
+              <span class="tatami-row-peso">${p.peso?p.peso+' kg':'—'}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function exportarListadoTatami(turnoNum) {
+  const lista = distribucionTatamis[turnoNum];
+  if (!lista?.length) { showToast('⚠️ Calcula la distribución primero'); return; }
+  const turno = config.turnos[turnoNum - 1];
+  const html = generarHTMLListado(lista, turno?.nombre || `Turno ${turnoNum}`, false);
+  imprimirConBlob(html);
+}
+
+function exportarPresentesTatami(turnoNum) {
+  const lista = distribucionTatamis[turnoNum];
+  if (!lista?.length) { showToast('⚠️ Calcula la distribución primero'); return; }
+  if (!Object.keys(scanned).length) { showToast('⚠️ No hay escaneos registrados'); return; }
+  const turno = config.turnos[turnoNum - 1];
+  const html = generarHTMLListado(lista, turno?.nombre || `Turno ${turnoNum}`, true);
+  imprimirConBlob(html);
+}
+
+function generarHTMLListado(lista, turnoNombre, soloPresentes) {
+  const css = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;color:#111;font-size:10pt;}
+    .pagina{padding:15mm;page-break-after:always;min-height:100vh;}.pagina:last-child{page-break-after:avoid;}
+    .cabecera{border-bottom:3px solid #c0392b;padding-bottom:6mm;margin-bottom:6mm;}
+    .cabecera h1{font-size:18pt;color:#c0392b;letter-spacing:1px;}
+    .cabecera h2{font-size:13pt;color:#111;margin-top:2mm;}
+    .cabecera .meta{font-size:8pt;color:#666;margin-top:2mm;}
+    table{width:100%;border-collapse:collapse;margin-top:4mm;}
+    thead tr{background:#c0392b;color:white;}
+    th{padding:5px 8px;text-align:left;font-size:8pt;text-transform:uppercase;letter-spacing:0.5px;}
+    td{padding:6px 8px;border-bottom:1px solid #eee;font-size:9.5pt;}
+    tr:nth-child(even) td{background:#f9f9f9;}
+    .peso{font-weight:bold;color:#c0392b;}
+    .puesto-campo{width:40mm;border-bottom:2px solid #333;display:inline-block;}
+    @media print{@page{margin:0;size:A4;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  </style></head><body>`;
+
+  let body = '';
+  lista.forEach(t => {
+    const participantes = soloPresentes ? t.participantes.filter(p => scanned[p.code]) : t.participantes;
+    if (soloPresentes && !participantes.length) return;
+    body += `<div class="pagina">
+      <div class="cabecera">
+        <h1>${t.label} — ${t.tipo || ''} ${soloPresentes ? '✅ PRESENTES' : ''}</h1>
+        <h2>${turnoNombre}</h2>
+        <div class="meta">Generado: ${new Date().toLocaleString('es-ES')} · ${participantes.length} judokas</div>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Nombre</th><th>Club</th><th>Peso</th><th>Sexo</th>${soloPresentes?'<th>Puesto</th>':''}</tr></thead>
+        <tbody>
+          ${participantes.map((p,i) => `<tr>
+            <td>${i+1}</td><td><strong>${p.nombre}</strong></td><td>${p.club}</td>
+            <td class="peso">${p.peso?p.peso+' kg':'—'}</td><td>${p.sexo||'—'}</td>
+            ${soloPresentes?'<td><span class="puesto-campo">&nbsp;</span></td>':''}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  return css + body + `</body></html>`;
+}
+
+function imprimirConBlob(html) {
+  const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('📄 Abre el archivo y usa Ctrl+P para imprimir');
+}
+
+// ══════════════════════════════ SCANNER ══════════════════════════════
+function buildTurnoFilters() {
+  const turnos = [...new Set(participants.map(p => p.turno).filter(Boolean))].sort();
+  document.getElementById('turno-filters').innerHTML =
+    `<button class="filter-tag active" onclick="setTurnoFilter(null,this)">Todos</button>` +
+    turnos.map(t => `<button class="filter-tag" onclick="setTurnoFilter('${t}',this)">${t}</button>`).join('');
+}
+
+function setTurnoFilter(turno, btn) {
+  activeTurnoFilter = turno;
+  document.querySelectorAll('.filter-tag').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPendingList();
+}
+
+// filtrosAplicados = true cuando el escáner está en modo restringido
+let filtrosAplicados = false;
+
+function setTatamiFilter() {
+  // Solo visual mientras no se apliquen
+  renderPendingList();
+}
+
+function aplicarFiltros() {
+  const listaStr = (document.getElementById('tatami-lista')?.value || '').trim();
+  const nums = listaStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  activeTatamiFilter = nums.length ? new Set(nums) : null;
+  filtrosAplicados = true;
+
+  // UI
+  document.getElementById('btn-aplicar-filtros').style.display = 'none';
+  document.getElementById('btn-desactivar-filtros').style.display = '';
+  // Bloquear input de tatamis
+  const tatamiInput = document.getElementById('tatami-lista');
+  if (tatamiInput) { tatamiInput.setAttribute('data-locked', tatamiInput.value); tatamiInput.readOnly = true; tatamiInput.style.opacity = '0.6'; tatamiInput.style.cursor = 'not-allowed'; }
+  // Bloquear botones de turno
+  document.querySelectorAll('.filter-tag').forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; b.style.pointerEvents = 'none'; });
+  const infoEl = document.getElementById('filtros-activos-info');
+  const partes = [];
+  if (activeTurnoFilter) partes.push('Turno: ' + activeTurnoFilter);
+  if (activeTatamiFilter) partes.push('Tatamis: ' + [...activeTatamiFilter].join(', '));
+  if (partes.length) {
+    infoEl.style.display = '';
+    infoEl.innerHTML = '🔒 Filtros activos — ' + partes.join(' · ') + '. Solo se registran participantes de este puesto.';
+  } else {
+    infoEl.style.display = 'none';
+  }
+  renderPendingList();
+  showToast('🔒 Filtros aplicados — el escáner solo aceptará participantes de este puesto');
+  updateProgress();
+}
+
+function desactivarFiltros() {
+  filtrosAplicados = false;
+  activeTatamiFilter = null;
+  const listaEl = document.getElementById('tatami-lista');
+  if (listaEl) { listaEl.value = ''; listaEl.readOnly = false; listaEl.style.opacity = ''; listaEl.style.cursor = ''; }
+  // Desbloquear botones de turno
+  document.querySelectorAll('.filter-tag').forEach(function(b) { b.disabled = false; b.style.opacity = ''; b.style.pointerEvents = ''; });
+  document.getElementById('btn-aplicar-filtros').style.display = '';
+  document.getElementById('btn-desactivar-filtros').style.display = 'none';
+  document.getElementById('filtros-activos-info').style.display = 'none';
+  renderPendingList();
+  showToast('🔓 Filtros desactivados — el escáner acepta todos los participantes');
+  updateProgress();
+}
+
+function clearTatamiFilter() {
+  activeTatamiFilter = null;
+  renderPendingList();
+}
+
+function perteneceAlPuesto(p) {
+  if (!filtrosAplicados) return true;
+  if (activeTurnoFilter && p.turno !== activeTurnoFilter) return false;
+  if (activeTatamiFilter) {
+    const num = getTatamiNum(p);
+    if (num === null || !activeTatamiFilter.has(num)) return false;
+  }
+  return true;
+}
+
+function getTatamiNum(p) {
+  // Extraer número del tatami asignado (ej: "Tatami 3" -> 3)
+  const m = String(p.tatami || '').match(/\d+/);
+  return m ? parseInt(m[0]) : null;
+}
+
+function renderPendingList() {
+  let list = participants.filter(p => {
+    if (scanned[p.code]) return false;
+    if (activeTurnoFilter && p.turno !== activeTurnoFilter) return false;
+    if (activeTatamiFilter) {
+      const num = getTatamiNum(p);
+      if (num === null || !activeTatamiFilter.has(num)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById('pending-count');
+  if (countEl) countEl.textContent = list.length ? '(' + list.length + ')' : '';
+
+  const container = document.getElementById('pending-list');
+  if (!list.length) {
+    container.innerHTML = '<div style="color:var(--green);padding:0.5rem 0;font-weight:600;">✅ ¡Todos presentes!</div>';
+    return;
+  }
+
+  // Agrupar por club, ordenado por nombre de club
+  const porClub = {};
+  list.forEach(p => {
+    if (!porClub[p.club]) porClub[p.club] = [];
+    porClub[p.club].push(p);
+  });
+  // Ordenar participantes de cada club por tatami
+  Object.values(porClub).forEach(arr => arr.sort((a, b) => (getTatamiNum(a)||0) - (getTatamiNum(b)||0)));
+
+  container.innerHTML = Object.keys(porClub).sort().map(club => {
+    const miembros = porClub[club];
+    return '<div style="margin-bottom:0.75rem;">' +
+      '<div style="font-weight:700;font-size:0.8rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.04em;padding:0.3rem 0;border-bottom:1px solid var(--border);margin-bottom:0.3rem;">' +
+        club + ' <span style="font-weight:400;color:var(--muted);">(' + miembros.length + ')</span></div>' +
+      miembros.map(p => {
+        const tatami = p.tatami || '—';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0.2rem;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+          '<span>' + p.nombre + '</span>' +
+          '<span style="display:flex;gap:0.4rem;align-items:center;flex-shrink:0;margin-left:0.5rem;">' +
+            '<code style="color:var(--muted);font-size:0.68rem;">' + p.code + '</code>' +
+            '<span style="color:var(--muted);font-size:0.75rem;">' + tatami + '</span>' +
+          '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }).join('');
+}
+
+function exportarEscaneos() {
+  if (!Object.keys(scanned).length) { showToast('⚠️ No hay escaneos para exportar'); return; }
+  const tatamiLabel = activeTatamiFilter ? 'Tatamis ' + [...activeTatamiFilter].join(',') : 'Todos';
+  const data = { puesto: tatamiLabel, fecha: new Date().toISOString(), escaneos: scanned };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = 'escaneos_' + (activeTatamiFilter ? 'tatamis' + [...activeTatamiFilter].join('-') : 'todos') + '_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📤 Escaneos exportados');
+}
+
+function importarEscaneos(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      const escaneos = data.escaneos || data; // compatibilidad
+      let nuevos = 0;
+      Object.entries(escaneos).forEach(([code, val]) => {
+        if (!scanned[code]) { scanned[code] = val; nuevos++; }
+      });
+      scanOkCount = Object.keys(scanned).length;
+      document.getElementById('scan-ok-count').textContent = scanOkCount;
+      updateProgress(); renderPendingList(); guardarSesion();
+      showToast('📥 ' + nuevos + ' escaneos importados del otro puesto');
+    } catch { showToast('❌ Error al leer el archivo'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+let _scanLastKeyTime = 0;
+let _scanAutoTimer = null;
+
+function handleScanKey(e) {
+  if (e.key === 'Enter') {
+    if (_scanAutoTimer) { clearTimeout(_scanAutoTimer); _scanAutoTimer = null; }
+    const val = document.getElementById('scan-input').value.trim().toUpperCase();
+    if (val) processScan(val);
+    document.getElementById('scan-input').value = '';
+    return;
+  }
+  // Detección de pistola: si los caracteres llegan en menos de 50ms entre sí
+  // es una pistola → procesar automáticamente tras 80ms sin más caracteres
+  const now = Date.now();
+  const delta = now - _scanLastKeyTime;
+  _scanLastKeyTime = now;
+  if (delta < 50) {
+    // Parece pistola — armar timer para procesar automáticamente
+    if (_scanAutoTimer) clearTimeout(_scanAutoTimer);
+    _scanAutoTimer = setTimeout(function() {
+      const val = document.getElementById('scan-input').value.trim().toUpperCase();
+      if (val) processScan(val);
+      document.getElementById('scan-input').value = '';
+      _scanAutoTimer = null;
+    }, 80);
+  }
+}
+
+function processScan(code) {
+  const participant = participants.find(p => p.code === code);
+  if (!participant) {
+    showScanResult('error', null, code);
+    scanErrCount++;
+    document.getElementById('scan-err-count').textContent = scanErrCount;
+    addLog(code, '—', 'Código no encontrado', 'error');
+    return;
+  }
+  if (!perteneceAlPuesto(participant)) {
+    // Calcular motivo exacto
+    const motivoTurno = activeTurnoFilter && participant.turno !== activeTurnoFilter;
+    const motivoTatami = activeTatamiFilter && (() => { const n = getTatamiNum(participant); return n === null || !activeTatamiFilter.has(n); })();
+    let motivo = '';
+    if (motivoTurno && motivoTatami) motivo = 'Turno y tatami incorrectos';
+    else if (motivoTurno) motivo = 'Turno incorrecto (' + participant.turno + ')';
+    else if (motivoTatami) motivo = 'Tatami incorrecto (' + (participant.tatami||'sin tatami') + ')';
+    else motivo = 'Fuera de este puesto';
+    showScanResult('fuera', participant, code, motivo);
+    scanErrCount++;
+    document.getElementById('scan-err-count').textContent = scanErrCount;
+    addLog(code, participant.nombre, '⛔ ' + motivo, 'error');
+    return;
+  }
+  if (scanned[code]) {
+    showScanResult('warn', participant, code);
+    addLog(code, participant.nombre, 'Ya registrado', 'warn');
+    guardarSesion();
+    return;
+  }
+  scanned[code] = { timestamp: new Date() };
+  scanOkCount++;
+  document.getElementById('scan-ok-count').textContent = scanOkCount;
+  updateProgress();
+  showScanResult('ok', participant, code);
+  addLog(code, participant.nombre, (participant.tatami ? participant.tatami + ' · ' : '') + participant.club, 'ok');
+  renderPendingList();
+  guardarSesion();
+}
+
+function showScanResult(type, participant, code, motivo) {
+  const card = document.getElementById('result-card');
+  card.className = 'result-card ' + type;
+  if (type === 'ok') card.innerHTML = `<div>
+    <div class="result-icon">✅</div>
+    <div class="result-name">${participant.nombre}</div>
+    ${participant.tatami ? `<div style="font-size:2rem;font-weight:900;color:var(--gold);letter-spacing:0.05em;margin:0.3rem 0;">${participant.tatami.toUpperCase()}</div>` : ''}
+    <div class="result-club">${participant.club}</div>
+    <div class="result-meta">${participant.categoria} · ${participant.turno}</div>
+    <div style="margin-top:0.5rem;"><code style="color:var(--muted);font-size:0.78rem;">${code}</code></div>
+  </div>`;
+  else if (type === 'warn') card.innerHTML = `<div>
+    <div class="result-icon">⚠️</div>
+    <div class="result-name">${participant.nombre}</div>
+    ${participant.tatami ? `<div style="font-size:1.6rem;font-weight:900;color:var(--gold);margin:0.3rem 0;">${participant.tatami.toUpperCase()}</div>` : ''}
+    <div class="result-warn-text">Ya estaba registrado</div>
+    <div class="result-meta">${participant.club} · ${participant.turno}</div>
+    <div style="margin-top:0.3rem;"><code style="color:var(--muted);font-size:0.78rem;">${code}</code></div>
+  </div>`;
+  else if (type === 'fuera') card.innerHTML = `<div>
+    <div class="result-icon">⛔</div>
+    <div class="result-name">${participant.nombre}</div>
+    <div style="font-size:1.2rem;font-weight:900;color:var(--red);margin:0.3rem 0;">${participant.tatami || 'Sin tatami'}</div>
+    <div class="result-warn-text">${motivo || 'No pertenece a este puesto'}</div>
+    <div class="result-meta">${participant.club} · ${participant.turno}</div>
+    <div style="margin-top:0.3rem;"><code style="color:var(--muted);font-size:0.78rem;">${code}</code></div>
+  </div>`;
+  else card.innerHTML = `<div><div class="result-icon">❌</div><div class="result-error-text">Código no encontrado</div><div style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">${code}</div></div>`;
+}
+
+function addLog(code, nombre, info, status) {
+  const ul = document.getElementById('scan-log');
+  const icons = { ok:'✅', warn:'⚠️', error:'❌' };
+  const now = new Date().toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const li = document.createElement('li');
+  li.className = 'log-item';
+  li.innerHTML = `<span class="log-status">${icons[status]}</span><span class="log-time">${now}</span><span class="log-name">${nombre}</span><code style="color:var(--muted);font-size:0.72rem;margin:0 0.3rem;flex-shrink:0;">${code}</code><span style="color:var(--muted);font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${info}</span>`;
+  if (ul.children[0]?.textContent.includes('Sin registros')) ul.innerHTML = '';
+  ul.insertBefore(li, ul.firstChild);
+}
+
+function updateProgress() {
+  // Calcular total y registrados del puesto activo (según filtros)
+  const misPart = filtrosAplicados
+    ? participants.filter(p => perteneceAlPuesto(p))
+    : participants;
+  const total = misPart.length;
+  const done = misPart.filter(p => scanned[p.code]).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  const label = filtrosAplicados
+    ? `${done} / ${total} de este puesto (${pct}%)`
+    : `${done} / ${total} participantes (${pct}%)`;
+  document.getElementById('scan-progress-label').textContent = label;
+  document.getElementById('scan-progress-bar').style.width = pct + '%';
+  // Actualizar contador de registrados al puesto
+  document.getElementById('scan-ok-count').textContent = done;
+}
+
+function resetSession() {
+  scanned = {}; scanOkCount = 0; scanErrCount = 0;
+  desactivarFiltros();
+  guardarSesion();
+  activeTurnoFilter = null;
+  document.querySelectorAll('.filter-tag').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-tag')?.classList.add('active');
+  document.getElementById('scan-ok-count').textContent = '0';
+  document.getElementById('scan-err-count').textContent = '0';
+  document.getElementById('result-card').className = 'result-card';
+  document.getElementById('result-card').innerHTML = '<div><div class="upload-icon">🎯</div><p style="color:var(--muted);font-size:0.9rem;">Esperando escaneo…</p></div>';
+  document.getElementById('scan-log').innerHTML = '<li style="padding:1rem;color:var(--muted);font-size:0.85rem;text-align:center;">Sin registros todavía</li>';
+  updateProgress(); renderPendingList();
+  showToast('🔄 Sesión reiniciada');
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('input, button, select, textarea')) return;
+  if (document.getElementById('tab-scanner').classList.contains('active'))
+    setTimeout(() => document.getElementById('scan-input').focus(), 50);
+});
+
+// ══════════════════════════════ REPORT ══════════════════════════════
+function renderReport() {
+  const total = participants.length;
+  const present = Object.keys(scanned).length;
+
+  // Sin config ni participantes
+  if (!configGuardada || !total) {
+    document.getElementById('report-no-config').style.display = '';
+    ['report-card-general','report-card-sexo','report-card-cat','report-card-mod','report-card-turno','report-card-club'].forEach(id => {
+      document.getElementById(id).style.display = 'none';
+    });
+    return;
+  }
+  document.getElementById('report-no-config').style.display = 'none';
+  ['report-card-general','report-card-sexo','report-card-cat','report-card-turno','report-card-club'].forEach(id => {
+    document.getElementById(id).style.display = '';
+  });
+
+  // ── Resumen general ──
+  document.getElementById('report-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Inscritos</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${present}</div><div class="stat-label">Presentes</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${total-present}</div><div class="stat-label">Ausentes</div></div>
+    <div class="stat-card"><div class="stat-num">${total?Math.round((present/total)*100):0}%</div><div class="stat-label">Asistencia</div></div>`;
+
+  // ── Por sexo ──
+  const sexos = [
+    { label: '👦 Masculino', key: 'Masculino', color: '#3B82F6' },
+    { label: '👧 Femenino',  key: 'Femenino',  color: '#EC4899' },
+  ];
+  document.getElementById('report-sexo').innerHTML = sexos.map(s => {
+    const n = participants.filter(p => p.sexo === s.key).length;
+    const pr = participants.filter(p => p.sexo === s.key && scanned[p.code]).length;
+    const pct = total ? Math.round((n/total)*100) : 0;
+    const pctPr = n ? Math.round((pr/n)*100) : 0;
+    return barRow(s.label, n, pr, pct, pctPr, s.color);
+  }).join('');
+
+  // ── Por categoría (solo las configuradas) ──
+  document.getElementById('report-categorias').innerHTML = config.categorias.map(cat => {
+    const n = participants.filter(p => p.categoria === cat.nombre).length;
+    if (!n) return '';
+    const pr = participants.filter(p => p.categoria === cat.nombre && scanned[p.code]).length;
+    const pct = total ? Math.round((n/total)*100) : 0;
+    const pctPr = n ? Math.round((pr/n)*100) : 0;
+    const info = CATALOGO_CATEGORIAS.find(c => c.nombre === cat.nombre);
+    return barRow(`${cat.nombre} <span style="font-size:0.7rem;color:var(--muted)">${info?.curso||''}</span>`, n, pr, pct, pctPr, '#D72B2B');
+  }).join('') || '<p style="color:var(--muted);font-size:0.85rem;">Sin datos</p>';
+
+  // ── Por modalidad (solo si hay Elite configurado) ──
+  const hayElite = config.categorias.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+  const cardMod = document.getElementById('report-card-mod');
+  if (hayElite) {
+    cardMod.style.display = '';
+    const mods = [
+      { label: '🥋 Promoción', key: 'Promoción', color: '#22C55E' },
+      { label: '⭐ Elite',     key: 'Elite',     color: '#F59E0B' },
+    ];
+    document.getElementById('report-modalidades').innerHTML = mods.map(m => {
+      const n = participants.filter(p => p.modalidad === m.key).length;
+      if (!n) return '';
+      const pr = participants.filter(p => p.modalidad === m.key && scanned[p.code]).length;
+      const pct = total ? Math.round((n/total)*100) : 0;
+      const pctPr = n ? Math.round((pr/n)*100) : 0;
+      return barRow(m.label, n, pr, pct, pctPr, m.color);
+    }).join('');
+  } else {
+    cardMod.style.display = 'none';
+  }
+
+  // ── Por turno ──
+  document.getElementById('report-turnos').innerHTML = config.turnos.map(t => {
+    const n = participants.filter(p => p.turno === t.nombre).length;
+    if (!n) return '';
+    const pr = participants.filter(p => p.turno === t.nombre && scanned[p.code]).length;
+    const pct = total ? Math.round((n/total)*100) : 0;
+    const pctPr = n ? Math.round((pr/n)*100) : 0;
+    const cats = config.categorias.filter(c => c.turnoId === config.turnos.indexOf(t)+1).map(c=>c.nombre).join(', ');
+    return barRow(`${t.nombre} <span style="font-size:0.7rem;color:var(--muted)">${cats}</span>`, n, pr, pct, pctPr, '#8B5CF6');
+  }).join('') || '<p style="color:var(--muted);font-size:0.85rem;">Sin datos</p>';
+
+  // ── Por club ──
+  const clubs = {};
+  participants.forEach(p => {
+    if (!clubs[p.club]) clubs[p.club] = {total:0, present:0};
+    clubs[p.club].total++;
+    if (scanned[p.code]) clubs[p.club].present++;
+  });
+  document.getElementById('report-body').innerHTML = Object.entries(clubs)
+    .sort((a,b) => a[0].localeCompare(b[0]))
+    .map(([club, d]) => {
+      const pct = Math.round((d.present/d.total)*100);
+      const color = pct===100?'var(--green)':pct>50?'var(--gold)':'var(--red)';
+      return `<tr>
+        <td style="font-weight:600;">${club}</td>
+        <td>${d.total}</td>
+        <td style="color:var(--green);font-weight:600;">${d.present}</td>
+        <td style="color:var(--red);">${d.total-d.present}</td>
+        <td><span style="color:${color};font-weight:700;">${pct}%</span></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">Sin datos</td></tr>';
+
+  // ── Lista presentes ──
+  document.getElementById('present-body').innerHTML = participants.filter(p=>scanned[p.code]).map(p => {
+    const ts = scanned[p.code].timestamp.toLocaleTimeString('es-ES');
+    return `<tr>
+      <td><code style="color:var(--gold);font-size:0.78rem;">${p.code}</code></td>
+      <td style="font-weight:600;">${p.nombre}</td>
+      <td>${p.club}</td><td>${p.categoria}</td><td>${p.turno}</td>
+      <td style="color:var(--muted);">${ts}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem;">Sin escaneos</td></tr>';
+}
+
+function barRow(label, n, present, pctTotal, pctPresente, color) {
+  return `
+    <div class="stat-bar-row">
+      <div class="stat-bar-label">${label}</div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" style="width:${pctTotal}%; background:${color};"></div>
+      </div>
+      <div class="stat-bar-nums">${present}/${n} presentes</div>
+      <div class="stat-bar-pct" style="color:${color}">${pctTotal}%</div>
+    </div>`;
+}
+
+function exportarInformePDF() {
+  const total = participants.length;
+  const present = Object.keys(scanned).length;
+  if (!total) { showToast('⚠️ No hay participantes cargados'); return; }
+
+  const hayElite = config.categorias.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+
+  function barra(label, n, pr, pctTotal, color) {
+    const pctPr = n ? Math.round((pr/n)*100) : 0;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:9.5pt;">
+        <div style="width:160px;flex-shrink:0;">${label}</div>
+        <div style="flex:1;background:#eee;border-radius:999px;height:10px;overflow:hidden;">
+          <div style="width:${pctTotal}%;background:${color};height:100%;border-radius:999px;"></div>
+        </div>
+        <div style="width:100px;text-align:right;color:#666;">${pr}/${n} presentes</div>
+        <div style="width:36px;text-align:right;font-weight:700;color:${color};">${pctTotal}%</div>
+      </div>`;
+  }
+
+  // Sexo
+  const sexoRows = [
+    { label: 'Masculino', color: '#3B82F6' },
+    { label: 'Femenino',  color: '#EC4899' },
+  ].map(s => {
+    const n = participants.filter(p => p.sexo === s.label).length;
+    const pr = participants.filter(p => p.sexo === s.label && scanned[p.code]).length;
+    return n ? barra(s.label, n, pr, total ? Math.round((n/total)*100) : 0, s.color) : '';
+  }).join('');
+
+  // Categorías
+  const catRows = config.categorias.map(cat => {
+    const n = participants.filter(p => p.categoria === cat.nombre).length;
+    if (!n) return '';
+    const pr = participants.filter(p => p.categoria === cat.nombre && scanned[p.code]).length;
+    const info = CATALOGO_CATEGORIAS.find(c => c.nombre === cat.nombre);
+    return barra(`${cat.nombre} <span style="color:#999;font-size:8pt">${info?.curso||''}</span>`, n, pr, total ? Math.round((n/total)*100) : 0, '#c0392b');
+  }).join('');
+
+  // Modalidades
+  const modRows = hayElite ? [
+    { label: 'Promoción', color: '#22C55E' },
+    { label: 'Elite',     color: '#F59E0B' },
+  ].map(m => {
+    const n = participants.filter(p => p.modalidad === m.label).length;
+    if (!n) return '';
+    const pr = participants.filter(p => p.modalidad === m.label && scanned[p.code]).length;
+    return barra(m.label, n, pr, total ? Math.round((n/total)*100) : 0, m.color);
+  }).join('') : '';
+
+  // Turnos
+  const turnoRows = config.turnos.map(t => {
+    const n = participants.filter(p => p.turno === t.nombre).length;
+    if (!n) return '';
+    const pr = participants.filter(p => p.turno === t.nombre && scanned[p.code]).length;
+    const cats = config.categorias.filter(c => c.turnoId === config.turnos.indexOf(t)+1).map(c=>c.nombre).join(', ');
+    return barra(`${t.nombre} <span style="color:#999;font-size:8pt">${cats}</span>`, n, pr, total ? Math.round((n/total)*100) : 0, '#8B5CF6');
+  }).join('');
+
+  // Por club
+  const clubs = {};
+  participants.forEach(p => {
+    if (!clubs[p.club]) clubs[p.club] = {total:0, present:0};
+    clubs[p.club].total++;
+    if (scanned[p.code]) clubs[p.club].present++;
+  });
+  const clubRows = Object.entries(clubs).sort((a,b)=>a[0].localeCompare(b[0])).map(([club, d]) => {
+    const pct = Math.round((d.present/d.total)*100);
+    const color = pct===100?'#22C55E':pct>50?'#D72B2B':'#EF4444';
+    return `<tr>
+      <td style="padding:5px 8px;font-weight:600;">${club}</td>
+      <td style="padding:5px 8px;text-align:center;">${d.total}</td>
+      <td style="padding:5px 8px;text-align:center;color:#22C55E;font-weight:700;">${d.present}</td>
+      <td style="padding:5px 8px;text-align:center;color:#EF4444;">${d.total-d.present}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;color:${color};">${pct}%</td>
+    </tr>`;
+  }).join('');
+
+  // Lista presentes
+  const presenteRows = participants.filter(p=>scanned[p.code]).map(p => {
+    const ts = scanned[p.code].timestamp.toLocaleTimeString('es-ES');
+    return `<tr>
+      <td style="padding:4px 8px;font-size:8pt;color:#888;">${p.code}</td>
+      <td style="padding:4px 8px;font-weight:600;">${p.nombre}</td>
+      <td style="padding:4px 8px;">${p.club}</td>
+      <td style="padding:4px 8px;">${p.categoria}</td>
+      <td style="padding:4px 8px;">${p.turno}</td>
+      <td style="padding:4px 8px;color:#888;">${ts}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;color:#111;font-size:10pt;padding:15mm;}
+    h1{font-size:18pt;color:#c0392b;letter-spacing:1px;margin-bottom:2mm;}
+    h2{font-size:12pt;color:#c0392b;border-bottom:2px solid #c0392b;padding-bottom:3mm;margin:8mm 0 5mm;}
+    .meta{font-size:8.5pt;color:#666;margin-bottom:8mm;}
+    .stats{display:flex;gap:12px;margin-bottom:6mm;}
+    .stat{flex:1;border:1px solid #ddd;border-radius:6px;padding:8px;text-align:center;}
+    .stat-n{font-size:20pt;font-weight:bold;color:#c0392b;}
+    .stat-l{font-size:7.5pt;color:#888;text-transform:uppercase;letter-spacing:0.5px;}
+    table{width:100%;border-collapse:collapse;font-size:9pt;}
+    thead tr{background:#c0392b;color:#fff;}
+    th{padding:5px 8px;text-align:left;font-size:8pt;text-transform:uppercase;}
+    tr:nth-child(even) td{background:#f9f9f9;}
+    .seccion{margin-bottom:2mm;}
+    @media print{@page{margin:0;size:A4;}body{padding:12mm;}-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  </style></head><body>
+
+  <h1>Informe del Torneo</h1>
+  <div class="meta">Generado: ${new Date().toLocaleString('es-ES')} · ${total} participantes inscritos</div>
+
+  <h2>Resumen General</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Inscritos</div></div>
+    <div class="stat"><div class="stat-n" style="color:#22C55E">${present}</div><div class="stat-l">Presentes</div></div>
+    <div class="stat"><div class="stat-n" style="color:#EF4444">${total-present}</div><div class="stat-l">Ausentes</div></div>
+    <div class="stat"><div class="stat-n">${total?Math.round((present/total)*100):0}%</div><div class="stat-l">Asistencia</div></div>
+  </div>
+
+  <h2>Por Sexo</h2>
+  <div class="seccion">${sexoRows}</div>
+
+  <h2>Por Categoría</h2>
+  <div class="seccion">${catRows}</div>
+
+  ${hayElite ? `<h2>Por Modalidad</h2><div class="seccion">${modRows}</div>` : ''}
+
+  <h2>Por Turno</h2>
+  <div class="seccion">${turnoRows}</div>
+
+  <h2>Asistencia por Club</h2>
+  <table>
+    <thead><tr><th>Club</th><th style="text-align:center">Inscritos</th><th style="text-align:center">Presentes</th><th style="text-align:center">Ausentes</th><th style="text-align:center">% Asistencia</th></tr></thead>
+    <tbody>${clubRows}</tbody>
+  </table>
+
+  ${presenteRows ? `
+  <h2>Presentes — Lista completa</h2>
+  <table>
+    <thead><tr><th>Código</th><th>Nombre</th><th>Club</th><th>Categoría</th><th>Turno</th><th>Hora</th></tr></thead>
+    <tbody>${presenteRows}</tbody>
+  </table>` : ''}
+
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+  showToast('📄 Informe generado');
+}
+
+// ══════════════════════════════ TOAST ══════════════════════════════
+function reconstruirLog() {
+  if (!Object.keys(scanned).length) return;
+  const ul = document.getElementById('scan-log');
+  ul.innerHTML = '';
+  // Ordenar por timestamp
+  const entries = Object.entries(scanned)
+    .filter(([code, val]) => val && val.timestamp)
+    .sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp));
+  entries.forEach(([code, val]) => {
+    const p = participants.find(p => p.code === code);
+    const nombre = p ? p.nombre : '—';
+    const info = p ? ((p.tatami ? p.tatami + ' · ' : '') + p.club) : 'Desconocido';
+    const ts = new Date(val.timestamp);
+    const hora = ts.toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const li = document.createElement('li');
+    li.className = 'log-item';
+    li.innerHTML = `<span class="log-status">✅</span><span class="log-time">${hora}</span><span class="log-name">${nombre}</span><code style="color:var(--muted);font-size:0.72rem;margin:0 0.3rem;flex-shrink:0;">${code}</code><span style="color:var(--muted);font-size:0.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${info}</span>`;
+    ul.appendChild(li);
+  });
+  // El más reciente arriba
+  [...ul.children].reverse().forEach(li => ul.appendChild(li));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════ AUTOGUARDADO ══════════════════════════════
+const SESION_KEY = 'judobase_sesion';
+
+function exportarSesionCompleta() {
+  const data = {
+    config, configGuardada, participants, scanned,
+    scanOkCount, scanErrCount: 0, codeCounter,
+    distribucionTatamis, horasTurnos, ts: Date.now()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'judobase_sesion_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('💾 Sesión exportada — importa este archivo en los otros ordenadores');
+}
+
+function importarSesionCompleta(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.config || !data.participants) {
+        showToast('❌ Archivo de sesión no válido'); return;
+      }
+      config = data.config;
+      configGuardada = data.configGuardada || false;
+      participants = data.participants || [];
+      scanned = data.scanned || {};
+      scanOkCount = Object.keys(scanned).length;
+      scanErrCount = 0;
+      codeCounter = data.codeCounter || 1;
+      distribucionTatamis = data.distribucionTatamis || {};
+      horasTurnos = data.horasTurnos || {};
+
+      // Actualizar contadores
+      document.getElementById('scan-ok-count').textContent = scanOkCount;
+      document.getElementById('scan-err-count').textContent = 0;
+
+      // Renderizar config
+      renderConfig();
+
+      // Renderizar listado si hay participantes
+      if (participants.length) {
+        document.getElementById('admin-content').style.display = '';
+        document.getElementById('btn-quitar-wrap').style.display = '';
+        renderAdmin();
+        buildTurnoFilters();
+      }
+
+      // Re-renderizar distribución de tatamis si existe
+      const hayDistribucion = participants.some(p => p.tatami);
+      if (hayDistribucion) {
+        const resultado = document.getElementById('tatamis-resultado');
+        resultado.innerHTML = '';
+        config.turnos.forEach((turno, ti) => {
+          const catsTurno = config.categorias.filter(c => c.turnoId === ti + 1);
+          const tieneElite = catsTurno.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+          // Reconstruir grupos desde participants
+          const partTurno = participants.filter(p => p.turno === turno.nombre);
+          const tatamisUsados = [...new Set(partTurno.map(p => p.tatami).filter(Boolean))].sort((a,b) => {
+            const na = parseInt(a.match(/\d+/)?.[0]||0), nb = parseInt(b.match(/\d+/)?.[0]||0);
+            return na - nb;
+          });
+          const dist = tatamisUsados.map(label => {
+            const miembros = partTurno.filter(p => p.tatami === label);
+            const num = parseInt(label.match(/\d+/)?.[0] || 0);
+            const tipos = [...new Set(miembros.map(p => p.categoria + (p.modalidad === 'Elite' ? ' Elite' : '')))];
+            return { label, num, tipo: tipos.join(' · '), participantes: miembros };
+          });
+          distribucionTatamis[ti + 1] = dist;
+
+          const block = document.createElement('div');
+          block.className = 'turno-block';
+          block.innerHTML = `
+            <div class="turno-block-title">
+              ${turno.nombre} — ${catsTurno.map(c => c.nombre).join(' · ')}
+              ${tieneElite ? '<span style="font-size:0.75rem;background:rgba(215,43,43,0.2);padding:2px 8px;border-radius:4px;margin-left:8px;">ELITE + PROMOCIÓN</span>' : ''}
+            </div>
+            <div class="tatami-grid" id="grid-t${ti+1}"></div>
+            <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="exportarListadoTatami(${ti+1})">⬇️ Exportar listado ${turno.nombre}</button>
+              <button class="btn btn-outline btn-sm" onclick="exportarPresentesTatami(${ti+1})">✅ Exportar presentes ${turno.nombre}</button>
+            </div>`;
+          resultado.appendChild(block);
+          renderTatamiGrid(dist, `grid-t${ti+1}`);
+        });
+
+        const btnDeshacer = document.createElement('div');
+        btnDeshacer.style.cssText = 'margin-top:1rem;';
+        btnDeshacer.innerHTML = '<button class="btn btn-outline" onclick="deshacerDistribucion()">↩️ Deshacer distribución y editar pesos</button>';
+        resultado.appendChild(btnDeshacer);
+        resultado.style.display = '';
+      }
+
+      actualizarEstadoBotones();
+      updateProgress();
+      renderPendingList();
+      guardarSesion();
+      showToast('✅ Sesión importada — ' + participants.length + ' participantes' + (hayDistribucion ? ' con distribución de tatamis' : ''));
+    } catch(err) {
+      console.error(err);
+      showToast('❌ Error al leer el archivo: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function guardarSesion() {
+  try {
+    localStorage.setItem(SESION_KEY, JSON.stringify({
+      config,
+      configGuardada,
+      participants,
+      scanned,
+      scanOkCount,
+      scanErrCount,
+      codeCounter,
+      distribucionTatamis,
+      horasTurnos,
+      ts: Date.now(),
+    }));
+  } catch(e) { console.warn('No se pudo guardar la sesión:', e); }
+}
+
+function restaurarSesion() {
+  try {
+    const raw = localStorage.getItem(SESION_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    config = data.config || config;
+    configGuardada = data.configGuardada || false;
+    participants = data.participants || [];
+    scanned = data.scanned || {};
+    scanOkCount = Object.keys(scanned).length;
+    scanErrCount = 0;
+    codeCounter = data.codeCounter || 1;
+    distribucionTatamis = data.distribucionTatamis || {};
+    horasTurnos = data.horasTurnos || {};
+
+    document.getElementById('banner-restaurar').style.display = 'none';
+    document.getElementById('scan-ok-count').textContent = scanOkCount;
+    document.getElementById('scan-err-count').textContent = 0;
+
+    // renderConfig DESPUÉS de tener config y configGuardada listos
+    renderConfig();
+
+    // Restaurar margen de peso en el input (renderConfig no lo hace)
+    const margenInput = document.getElementById('input-margen-peso');
+    if (margenInput && config.margenPeso !== undefined) margenInput.value = config.margenPeso;
+
+    // Forzar re-render de tatamis con el configGuardada correcto
+    renderTatamisConfig();
+
+    if (participants.length) {
+      document.getElementById('admin-content').style.display = '';
+      document.getElementById('btn-quitar-wrap').style.display = '';
+      renderAdmin();
+      buildTurnoFilters();
+    }
+
+    // Re-renderizar distribución de tatamis si existe
+    const hayDistribucion = participants.some(p => p.tatami);
+    if (hayDistribucion) {
+      const resultado = document.getElementById('tatamis-resultado');
+      resultado.innerHTML = '';
+      config.turnos.forEach((turno, ti) => {
+        const catsTurno = config.categorias.filter(c => c.turnoId === ti + 1);
+        const tieneElite = catsTurno.some(c => c.modalidad === 'ambas' || c.modalidad === 'solo-elite');
+        const partTurno = participants.filter(p => p.turno === turno.nombre);
+        const tatamisUsados = [...new Set(partTurno.map(p => p.tatami).filter(Boolean))].sort((a,b) => {
+          const na = parseInt(a.match(/\d+/)?.[0]||0), nb = parseInt(b.match(/\d+/)?.[0]||0);
+          return na - nb;
+        });
+        const dist = tatamisUsados.map(label => {
+          const miembros = partTurno.filter(p => p.tatami === label);
+          const num = parseInt(label.match(/\d+/)?.[0] || 0);
+          const tipos = [...new Set(miembros.map(p => p.categoria + (p.modalidad === 'Elite' ? ' Elite' : '')))];
+          return { label, num, tipo: tipos.join(' · '), participantes: miembros };
+        });
+        distribucionTatamis[ti + 1] = dist;
+
+        const block = document.createElement('div');
+        block.className = 'turno-block';
+        block.innerHTML = `
+          <div class="turno-block-title">
+            ${turno.nombre} — ${catsTurno.map(c => c.nombre).join(' · ')}
+            ${tieneElite ? '<span style="font-size:0.75rem;background:rgba(215,43,43,0.2);padding:2px 8px;border-radius:4px;margin-left:8px;">ELITE + PROMOCIÓN</span>' : ''}
+          </div>
+          <div class="tatami-grid" id="grid-t${ti+1}"></div>
+          <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="exportarListadoTatami(${ti+1})">⬇️ Exportar listado ${turno.nombre}</button>
+            <button class="btn btn-outline btn-sm" onclick="exportarPresentesTatami(${ti+1})">✅ Exportar presentes ${turno.nombre}</button>
+          </div>`;
+        resultado.appendChild(block);
+        renderTatamiGrid(dist, `grid-t${ti+1}`);
+      });
+      const btnDeshacer = document.createElement('div');
+      btnDeshacer.style.cssText = 'margin-top:1rem;';
+      btnDeshacer.innerHTML = '<button class="btn btn-outline" onclick="deshacerDistribucion()">↩️ Deshacer distribución y editar pesos</button>';
+      resultado.appendChild(btnDeshacer);
+      resultado.style.display = '';
+    }
+
+    actualizarEstadoBotones();
+    updateProgress();
+    renderPendingList();
+    // Reconstruir log de escaneos
+    reconstruirLog();
+    showToast('✅ Sesión restaurada' + (hayDistribucion ? ' con distribución de tatamis' : ''));
+  } catch(e) {
+    console.warn('Error al restaurar sesión:', e);
+    showToast('⚠️ No se pudo restaurar la sesión');
+  }
+}
+
+function descartarSesion() {
+  localStorage.removeItem(SESION_KEY);
+  document.getElementById('banner-restaurar').style.display = 'none';
+  showToast('🗑️ Sesión descartada');
+}
+
+function comprobarSesionGuardada() {
+  try {
+    const raw = localStorage.getItem(SESION_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (!data.ts) return;
+    const fecha = new Date(data.ts).toLocaleString('es-ES');
+    const nParticipantes = data.participants?.length || 0;
+    const nEscaneos = Object.keys(data.scanned || {}).length;
+    const info = `${nParticipantes} participantes, ${nEscaneos} escaneos`;
+    document.getElementById('banner-fecha').textContent = fecha;
+    document.getElementById('banner-info').textContent = info;
+    document.getElementById('banner-restaurar').style.display = 'flex';
+  } catch(e) {}
+}
+
+// ══════════════════════════════ INIT ══════════════════════════════
+window.addEventListener('beforeunload', () => { guardarSesion(); });
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderConfig();
+  comprobarSesionGuardada();
+  actualizarEstadoBotones();
+  // Autoguardado cada 5 segundos
+  setInterval(guardarSesion, 5000);
+});
+</script>
+</body>
+</html>
