@@ -623,7 +623,9 @@ let CONFIG = {
     'Judo Club Lugokan','Judo Club Oleiros','Judo Club Pontevedra','Judo Club Senin',
     'Judo Club Shiai','Judo Club Trasno','Judo Club Ximnasio Fibra','Judo Lugo',
     'Lvcvs Dojo Club Deportivo','Orense Judo Club Marbel','Peleteiro','Terras de Santiago',
-    'Titan Combat Club Galicia'
+    'Titan Combat Club Galicia',
+    'Colexio Vilas Alborada','Judo Club Hercules','Club San Francisco Teo',
+    'Judo Club Juviana','Ponte de Lima','Juvalenca'
   ],
   clubsSeleccionados: [],
   categorias: [
@@ -787,7 +789,15 @@ function irPaso3() {
     if (!n.modalidad) { mostrarError('error-paso2', `Selecciona la modalidad de "${n.nombre} ${n.apellidos}".`); return; }
     if (!n.peso || n.peso <= 0 || n.peso > 150) { mostrarError('error-paso2', `Peso inválido para "${n.nombre} ${n.apellidos}".`); return; }
     if (!n.sexo) { mostrarError('error-paso2', `Selecciona el sexo de "${n.nombre} ${n.apellidos}".`); return; }
-    if (n.fnac && !validarFechaNac(n.fnac)) { mostrarError('error-paso2', `Fecha de nacimiento inválida para "${n.nombre} ${n.apellidos}". Usa el formato DD/MM/AAAA.`); return; }
+    if (!n.fnac) { mostrarError('error-paso2', `Falta la fecha de nacimiento de "${n.nombre} ${n.apellidos}".`); return; }
+    if (!validarFechaNac(n.fnac)) { mostrarError('error-paso2', `Fecha de nacimiento inválida para "${n.nombre} ${n.apellidos}". Usa el formato DD/MM/AAAA.`); return; }
+    const catCfg = CONFIG.categorias.find(c => c.nombre === n.categoria);
+    const anosOk = catCfg && catCfg.anos ? String(catCfg.anos).split(',').map(x => x.trim()).filter(Boolean) : [];
+    const anyoNac = n.fnac.match(/(\d{4})$/)[1];
+    if (anosOk.length && !anosOk.includes(anyoNac)) {
+      mostrarError('error-paso2', `"${n.nombre} ${n.apellidos}" nació en ${anyoNac}, que no corresponde a la categoría ${n.categoria} (nacidos en ${anosOk.join(', ')}).`);
+      return;
+    }
   }
   state.ninos = ninos;
 
