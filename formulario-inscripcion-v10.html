@@ -629,15 +629,13 @@ let CONFIG = {
   categorias: [
     { nombre: 'Biberón',     curso: '4º Infantil',    anos: '2019,2018', modalidad: 'solo-promo' },
     { nombre: 'Prebenjamín', curso: '5º-6º Infantil', anos: '2017,2016', modalidad: 'solo-promo' },
-    { nombre: 'Benjamín B',  curso: '1º-2º Primaria', anos: '2015,2014', modalidad: 'solo-promo' },
-    { nombre: 'Benjamín A',  curso: '3º-4º Primaria', anos: '2013,2012', modalidad: 'ambas' },
+    { nombre: 'Benjamín',    curso: '1º-4º Primaria', anos: '2015,2014,2013,2012', modalidad: 'ambas' },
     { nombre: 'Alevín',      curso: '5º-6º Primaria', anos: '2011,2010', modalidad: 'ambas' },
   ],
   pesoRangos: {
     'Biberón':     { min: 12, max: 30 },
     'Prebenjamín': { min: 14, max: 36 },
-    'Benjamín B':  { min: 16, max: 42 },
-    'Benjamín A':  { min: 18, max: 52 },
+    'Benjamín':    { min: 16, max: 52 },
     'Alevín':      { min: 22, max: 62 },
   }
 };
@@ -1126,7 +1124,7 @@ function seleccionarTodosClubs(sel) {
 }
 
 function renderCatsAdmin() {
-  const CATALOGO = ['Biberón','Prebenjamín','Benjamín B','Benjamín A','Alevín','Infantil','Cadete','Junior','Senior'];
+  const CATALOGO = ['Biberón','Prebenjamín','Benjamín','Alevín','Infantil','Cadete','Junior','Senior'];
   const container = document.getElementById('adm-cats-list');
   container.innerHTML = CONFIG.categorias.map((cat, i) => {
     return '<div class="cat-admin-row">' +
@@ -1153,7 +1151,7 @@ function renderCatsAdmin() {
 function addCatAdmin() {
   const sel = document.getElementById('adm-cat-nueva').value;
   if (!sel) return;
-  const cursos = {'Biberón':'4º Infantil','Prebenjamín':'5º-6º Infantil','Benjamín B':'1º-2º Primaria','Benjamín A':'3º-4º Primaria','Alevín':'5º-6º Primaria','Infantil':'1º-2º ESO','Cadete':'3º-4º ESO','Junior':'Bachillerato','Senior':'18+'};
+  const cursos = {'Biberón':'4º Infantil','Prebenjamín':'5º-6º Infantil','Benjamín':'1º-4º Primaria','Alevín':'5º-6º Primaria','Infantil':'1º-2º ESO','Cadete':'3º-4º ESO','Junior':'Bachillerato','Senior':'18+'};
   CONFIG.categorias.push({ nombre: sel, curso: cursos[sel]||'', anos: '', modalidad: 'solo-promo' });
   renderCatsAdmin();
 }
