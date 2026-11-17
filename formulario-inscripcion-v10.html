@@ -627,10 +627,10 @@ let CONFIG = {
   ],
   clubsSeleccionados: [],
   categorias: [
-    { nombre: 'Biberón',     curso: '4º Infantil',    anos: '2019,2018', modalidad: 'solo-promo' },
-    { nombre: 'Prebenjamín', curso: '5º-6º Infantil', anos: '2017,2016', modalidad: 'solo-promo' },
-    { nombre: 'Benjamín',    curso: '1º-4º Primaria', anos: '2015,2014,2013,2012', modalidad: 'ambas' },
-    { nombre: 'Alevín',      curso: '5º-6º Primaria', anos: '2011,2010', modalidad: 'ambas' },
+    { nombre: 'Biberón',     curso: '',    anos: '2019,2018', modalidad: 'solo-promo' },
+    { nombre: 'Prebenjamín', curso: '', anos: '2017,2016', modalidad: 'solo-promo' },
+    { nombre: 'Benjamín',    curso: '', anos: '2015,2014,2013,2012', modalidad: 'ambas' },
+    { nombre: 'Alevín',      curso: '', anos: '2011,2010', modalidad: 'ambas' },
   ],
   pesoRangos: {
     'Biberón':     { min: 12, max: 30 },
@@ -840,7 +840,7 @@ function addNino(nombre, apellidos, fnac) {
   div.className = 'fila-nino';
   div.id = 'fila-' + id;
   const opsCats = '<option value="">Categoría</option>' + CONFIG.categorias.map(function(c) {
-    return '<option value="' + c.nombre + '">' + c.nombre + (c.curso ? ' (' + c.curso + ')' : '') + '</option>';
+    return '<option value="' + c.nombre + '">' + c.nombre + '</option>';
   }).join('');
   div.innerHTML =
     '<input type="text" placeholder="Nombre" class="inp-nombre" autocomplete="off">' +
@@ -1151,8 +1151,7 @@ function renderCatsAdmin() {
 function addCatAdmin() {
   const sel = document.getElementById('adm-cat-nueva').value;
   if (!sel) return;
-  const cursos = {'Biberón':'4º Infantil','Prebenjamín':'5º-6º Infantil','Benjamín':'1º-4º Primaria','Alevín':'5º-6º Primaria','Infantil':'1º-2º ESO','Cadete':'3º-4º ESO','Junior':'Bachillerato','Senior':'18+'};
-  CONFIG.categorias.push({ nombre: sel, curso: cursos[sel]||'', anos: '', modalidad: 'solo-promo' });
+  CONFIG.categorias.push({ nombre: sel, curso: '', anos: '', modalidad: 'solo-promo' });
   renderCatsAdmin();
 }
 
