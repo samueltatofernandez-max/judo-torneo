@@ -697,7 +697,7 @@ function validarFnacInput(input) {
   if (!validarFechaNac(input.value.trim())) {
     input.style.borderColor = 'var(--rojo)';
   } else {
-    input.style.borderColor = '#4caf50';
+    input.style.borderColor = '';
   }
 }
 
@@ -751,7 +751,7 @@ function checkAnyo(fila) {
     if (avisoEl) avisoEl.textContent = '⛔ ' + err.charAt(0).toUpperCase() + err.slice(1);
   } else {
     if (avisoEl) avisoEl.textContent = '';
-    if (!fnacInput.value.trim() || validarFechaNac(fnacInput.value.trim())) fnacInput.style.borderColor = fnacInput.value.trim() ? '#4caf50' : '';
+    if (!fnacInput.value.trim() || validarFechaNac(fnacInput.value.trim())) fnacInput.style.borderColor = '';
   }
 }
 
@@ -824,7 +824,14 @@ function irPaso3() {
     if (!n.fnac) { mostrarError('error-paso2', `Falta la fecha de nacimiento de "${n.nombre} ${n.apellidos}".`); return; }
     if (!validarFechaNac(n.fnac)) { mostrarError('error-paso2', `Fecha de nacimiento inválida para "${n.nombre} ${n.apellidos}". Usa el formato DD/MM/AAAA.`); return; }
     const errAnyo = errorAnyo(n.fnac, n.categoria);
-    if (errAnyo) { mostrarError('error-paso2', `"${n.nombre} ${n.apellidos}": ${errAnyo}`); return; }
+    if (errAnyo) {
+      mostrarError('error-paso2', `"${n.nombre} ${n.apellidos}": ${errAnyo}`);
+      const filas = Array.from(document.querySelectorAll('.fila-nino'));
+      filas.forEach(checkAnyo);
+      const mala = filas.find(f => errorAnyo(f.querySelector('.inp-fnac').value, f.querySelector('.inp-categoria').value));
+      if (mala) { mala.scrollIntoView({ behavior: 'smooth', block: 'center' }); mala.querySelector('.inp-fnac').focus(); }
+      return;
+    }
   }
   state.ninos = ninos;
 
