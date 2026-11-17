@@ -138,6 +138,8 @@
   .btn-primary:disabled { background: #444; cursor: not-allowed; }
   .aviso-peso { font-size: 12px; color: var(--amarillo); padding: 2px 4px 6px; }
   .aviso-peso:empty { display: none; }
+  .aviso-anyo { font-size: 12px; color: #ff6b5b; font-weight: 600; padding: 2px 4px 6px; }
+  .aviso-anyo:empty { display: none; }
 
   /* RESUMEN */
   .resumen-card { background: var(--gris-medio); border: 1px solid var(--borde); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
@@ -723,6 +725,36 @@ function checkPeso(fila) {
   }
 }
 
+function anosCategoria(cat) {
+  const c = CONFIG.categorias.find(x => x.nombre === cat);
+  return c && c.anos ? String(c.anos).split(/[,;\s]+/).map(x => x.trim()).filter(Boolean) : [];
+}
+
+// Devuelve un mensaje de error si el año de nacimiento no corresponde a la categoría; null si es válido o no se puede comprobar
+function errorAnyo(fnac, cat) {
+  if (!fnac || !cat) return null;
+  const m = String(fnac).trim().match(/(\d{4})$/);
+  if (!m) return null;
+  const permitidos = anosCategoria(cat);
+  if (!permitidos.length || permitidos.includes(m[1])) return null;
+  const orden = permitidos.slice().sort();
+  return `el año de nacimiento ${m[1]} no es válido para la categoría ${cat}. Años permitidos: ${orden.join(', ')}.`;
+}
+
+function checkAnyo(fila) {
+  const fnacInput = fila.querySelector('.inp-fnac');
+  const cat = fila.querySelector('.inp-categoria').value;
+  const avisoEl = document.getElementById(fila.id.replace('fila-', 'aviso-anyo-'));
+  const err = errorAnyo(fnacInput.value, cat);
+  if (err) {
+    fnacInput.style.borderColor = 'var(--rojo)';
+    if (avisoEl) avisoEl.textContent = '⛔ ' + err.charAt(0).toUpperCase() + err.slice(1);
+  } else {
+    if (avisoEl) avisoEl.textContent = '';
+    if (!fnacInput.value.trim() || validarFechaNac(fnacInput.value.trim())) fnacInput.style.borderColor = fnacInput.value.trim() ? '#4caf50' : '';
+  }
+}
+
 let state = { club: '', ninos: [], totalEnviados: 0 };
 let ninoId = 0;
 
@@ -791,13 +823,8 @@ function irPaso3() {
     if (!n.sexo) { mostrarError('error-paso2', `Selecciona el sexo de "${n.nombre} ${n.apellidos}".`); return; }
     if (!n.fnac) { mostrarError('error-paso2', `Falta la fecha de nacimiento de "${n.nombre} ${n.apellidos}".`); return; }
     if (!validarFechaNac(n.fnac)) { mostrarError('error-paso2', `Fecha de nacimiento inválida para "${n.nombre} ${n.apellidos}". Usa el formato DD/MM/AAAA.`); return; }
-    const catCfg = CONFIG.categorias.find(c => c.nombre === n.categoria);
-    const anosOk = catCfg && catCfg.anos ? String(catCfg.anos).split(',').map(x => x.trim()).filter(Boolean) : [];
-    const anyoNac = n.fnac.match(/(\d{4})$/)[1];
-    if (anosOk.length && !anosOk.includes(anyoNac)) {
-      mostrarError('error-paso2', `"${n.nombre} ${n.apellidos}" nació en ${anyoNac}, que no corresponde a la categoría ${n.categoria} (nacidos en ${anosOk.join(', ')}).`);
-      return;
-    }
+    const errAnyo = errorAnyo(n.fnac, n.categoria);
+    if (errAnyo) { mostrarError('error-paso2', `"${n.nombre} ${n.apellidos}": ${errAnyo}`); return; }
   }
   state.ninos = ninos;
 
@@ -869,12 +896,19 @@ function addNino(nombre, apellidos, fnac) {
   aviso.className = 'aviso-peso';
   aviso.id = 'aviso-' + id;
   const lista = document.getElementById('lista-ninos');
+  const avisoAnyo = document.createElement('div');
+  avisoAnyo.className = 'aviso-anyo';
+  avisoAnyo.id = 'aviso-anyo-' + id;
   lista.appendChild(div);
   lista.appendChild(aviso);
+  lista.appendChild(avisoAnyo);
   const normOnBlur = e => { e.target.value = normalizarTexto(e.target.value); };
   div.querySelector('.inp-nombre').addEventListener('blur', normOnBlur);
   div.querySelector('.inp-apellidos').addEventListener('blur', normOnBlur);
   div.querySelector('.inp-peso').addEventListener('input', () => checkPeso(div));
+  div.querySelector('.inp-fnac').addEventListener('input', () => checkAnyo(div));
+  div.querySelector('.inp-fnac').addEventListener('blur', () => checkAnyo(div));
+  checkAnyo(div);
   if (!nombre) div.querySelector('.inp-nombre').focus();
 }
 
@@ -898,6 +932,7 @@ function onCatChange(sel) {
       </div>`;
   }
   checkPeso(sel.closest('.fila-nino'));
+  checkAnyo(sel.closest('.fila-nino'));
 }
 
 function delNino(id) {
@@ -905,6 +940,8 @@ function delNino(id) {
   const aviso = document.getElementById('aviso-' + id);
   if (el) el.remove();
   if (aviso) aviso.remove();
+  const avisoAnyo = document.getElementById('aviso-anyo-' + id);
+  if (avisoAnyo) avisoAnyo.remove();
 }
 
 function pegarMasivo() {
@@ -922,6 +959,7 @@ function pegarMasivo() {
     if (nombres[i]) filasExistentes[i].querySelector('.inp-nombre').value = nombres[i];
     if (apellidos[i]) filasExistentes[i].querySelector('.inp-apellidos').value = apellidos[i];
     if (fnacs[i]) filasExistentes[i].querySelector('.inp-fnac').value = fnacs[i];
+    checkAnyo(filasExistentes[i]);
   }
   for (; i < total; i++) addNino(nombres[i] || '', apellidos[i] || '', fnacs[i] || '');
   document.getElementById('paste-nombres').value = '';
@@ -1028,7 +1066,7 @@ function restaurarBorrador() {
       document.getElementById('lista-ninos').innerHTML = '';
       ninoId = 0;
       data.ninos.forEach(n => {
-        addNino(n.nombre, n.apellidos);
+        addNino(n.nombre, n.apellidos, n.fnac);
         const filas = document.querySelectorAll('#lista-ninos .fila-nino');
         const fila = filas[filas.length - 1];
         const catSel = fila.querySelector('.inp-categoria');
@@ -1039,6 +1077,7 @@ function restaurarBorrador() {
         fila.querySelector('.inp-peso').value = n.peso;
         fila.querySelector('.inp-sexo').value = n.sexo;
         checkPeso(fila);
+        checkAnyo(fila);
       });
       irPaso(2);
     };
